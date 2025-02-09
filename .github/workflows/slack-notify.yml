@@ -3,7 +3,7 @@ name: Notify Slack
 on:
   push:
     branches:
-      - main
+      - develop
   pull_request:
     types: [opened, closed]
 

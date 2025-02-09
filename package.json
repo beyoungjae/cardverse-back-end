@@ -6,7 +6,15 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  "author": "chaos",
+  "license": "MIT",
+  "description": "Backend for Cardverse application",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beyoungjae/cardverse-back-end.git"
+  },
+  "bugs": {
+    "url": "https://github.com/beyoungjae/cardverse-back-end/issues"
+  },
+  "homepage": "https://github.com/beyoungjae/cardverse-back-end#readme"
 }
