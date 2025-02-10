@@ -25,6 +25,7 @@ module.exports = class UserTemplate extends Sequelize.Model {
                     type: Sequelize.DATE,
                     allowNull: true,
                     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+                    onUpdate: Sequelize.literal('CURRENT_TIMESTAMP'),
                 },
                 expriesAt: {
                     type: Sequelize.DATE,
@@ -50,6 +51,6 @@ module.exports = class UserTemplate extends Sequelize.Model {
         this.hasOne(models.Payment, { foreignKey: 'user_template_id' })
 
         this.belongsTo(models.Template, { foreignKey: 'template_id' })
-        this.belongsTo(models.User, { foreignKey: 'user_id' })
+        this.belongsTo(models.User, { foreignKey: 'user_id', onDelete: 'CASCADE' })
     }
 }
