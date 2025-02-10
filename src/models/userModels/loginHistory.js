@@ -1,41 +1,42 @@
 const Sequelize = require('sequelize')
 
-module.exports = class Notification extends Sequelize.Model {
+module.exports = class LoginHistory extends Sequelize.Model {
     static init(sequelize) {
         return super.init(
             {
-                type: {
-                    type: Sequelize.ENUM('signup', 'eventWinner', 'passwordChange', 'purchaseThankYou', 'couponIssued', 'verificationCode'),
+                loginType: {
+                    type: Sequelize.ENUM('kakao', 'local', 'google'),
+                    allowNull: false,
+                    defaultValue: 'local',
+                },
+                ipAddress: {
+                    type: Sequelize.STRING(45),
                     allowNull: false,
                 },
-
-                content: {
+                userAgent: {
                     type: Sequelize.TEXT,
-                    allowNull: false,
+                    allowNull: true,
                 },
-
-                createdAt: {
+                loginAt: {
                     type: Sequelize.DATE,
                     allowNull: false,
                     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-                },
-
-                isRead: {
-                    type: Sequelize.BOOLEAN,
-                    allowNull: false,
-                    defaultValue: false,
                 },
             },
             {
                 sequelize,
                 timestamps: false,
                 underscored: true,
-                modelName: 'Notification',
-                tableName: 'notifications',
+                modelName: 'LoginHistory',
+                tableName: 'login_histories',
                 paranoid: false,
                 charset: 'utf8mb4',
                 collate: 'utf8mb4_general_ci',
             },
         )
+    }
+
+    static associate(models) {
+        this.belongsTo(models.User, { foreignKey: 'user_id', onDelete: 'CASCADE' })
     }
 }

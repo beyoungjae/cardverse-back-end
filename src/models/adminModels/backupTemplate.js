@@ -1,37 +1,32 @@
 const Sequelize = require('sequelize')
 
-module.exports = class Notification extends Sequelize.Model {
+module.exports = class BackupTemplate extends Sequelize.Model {
     static init(sequelize) {
         return super.init(
             {
-                type: {
-                    type: Sequelize.ENUM('signup', 'eventWinner', 'passwordChange', 'purchaseThankYou', 'couponIssued', 'verificationCode'),
+                userId: {
+                    type: Sequelize.BIGINT,
                     allowNull: false,
                 },
-
-                content: {
-                    type: Sequelize.TEXT,
+                userTemplateId: {
+                    type: Sequelize.BIGINT,
                     allowNull: false,
                 },
-
+                backupData: {
+                    type: Sequelize.JSON,
+                    allowNull: false,
+                },
                 createdAt: {
                     type: Sequelize.DATE,
-                    allowNull: false,
                     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-                },
-
-                isRead: {
-                    type: Sequelize.BOOLEAN,
-                    allowNull: false,
-                    defaultValue: false,
                 },
             },
             {
                 sequelize,
                 timestamps: false,
                 underscored: true,
-                modelName: 'Notification',
-                tableName: 'notifications',
+                modelName: 'BackupTemplate',
+                tableName: 'backup_templates',
                 paranoid: false,
                 charset: 'utf8mb4',
                 collate: 'utf8mb4_general_ci',
