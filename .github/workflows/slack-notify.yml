@@ -1,18 +1,18 @@
 name: Notify Slack
 
 on:
-   push:
-      branches:
-         - develop
-   pull_request:
-      types: [opened, closed]
+  push:
+    branches:
+      - develop
+  pull_request:
+    types: [opened, closed]
 
 jobs:
-   notify:
-      runs-on: ubuntu-latest
-      steps:
-         - name: Send message to Slack
-           uses: rtCamp/action-slack-notify@v2$
-           env:
-              SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-              SLACK_MESSAGE: "🚀 *GitHub 업데이트 상황 알림(백엔드)* \n🔹 저장소 위치: ${{ github.repository }} \n🔹 이벤트 동작: ${{ github.event_name }} \n🔹 유저: ${{ github.actor }}"
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send message to Slack
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: "🚀 *GitHub 업데이트 상황 알림(백엔드)* \n🔹 저장소 위치: ${{ github.repository }} \n🔹 이벤트 동작: ${{ github.event_name }} \n🔹 유저: ${{ github.actor }}"
