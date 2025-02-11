@@ -16,7 +16,7 @@ module.exports = class Template extends Sequelize.Model {
                     type: Sequelize.ENUM('wedding', 'birthday', 'party'),
                     allowNull: false,
                 },
-                description: {
+                content: {
                     type: Sequelize.TEXT,
                     allowNull: true,
                 },
@@ -25,7 +25,7 @@ module.exports = class Template extends Sequelize.Model {
                     allowNull: false,
                     defaultValue: 10000,
                 },
-                templateData: {
+                data: {
                     type: Sequelize.JSON,
                     allowNull: false,
                 },
@@ -63,7 +63,7 @@ module.exports = class Template extends Sequelize.Model {
     }
 
     static associate(models) {
-        this.belongsTo(models.User, { foreignKey: 'user_id' })
+        this.belongsTo(models.User, { foreignKey: 'user_id' }) // 관리자 작성이니 CASCADE 설정x
         this.hasMany(models.UserTemplate, { foreignKey: 'template_id' })
         this.hasMany(models.Images, { foreignKey: 'template_id' })
     }

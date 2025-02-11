@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize')
 
-module.exports = class Event extends Sequelize.Model {
+module.exports = class UserEvent extends Sequelize.Model {
     static init(sequelize) {
         return super.init(
             {
@@ -9,44 +9,36 @@ module.exports = class Event extends Sequelize.Model {
                     allowNull: false,
                     comment: 'attendance: 출석 / purchase: 구매 / review: 리뷰 / signup: 회원가입',
                 },
-                title: {
-                    type: Sequelize.STRING(255),
+                data: {
+                    type: Sequelize.JSON,
                     allowNull: false,
                 },
-                content: {
-                    type: Sequelize.TEXT,
+                status: {
+                    type: Sequelize.ENUM('participating', 'fail', 'win', 'end'),
                     allowNull: false,
+                    defaultValue: 'participating',
+                    comment: 'participating: 참여중 / fail: 탈락 / win: 당첨 / end: 이벤트 종료',
                 },
-                startDate: {
+                createdAt: {
                     type: Sequelize.DATE,
                     allowNull: false,
+                    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+                    comment: '참여 일자',
                 },
-                endDate: {
+                updatedAt: {
                     type: Sequelize.DATE,
-                    allowNull: false,
-                },
-                isLimited: {
-                    type: Sequelize.BOOLEAN,
-                    allowNull: false,
-                    defaultValue: false,
-                },
-                bannerUrl: {
-                    type: Sequelize.STRING(200),
-                    allowNull: false,
-                },
-                maxParticipants: {
-                    type: Sequelize.INTEGER,
                     allowNull: true,
                     defaultValue: null,
-                    comment: 'null = 무제한',
+                    onUpdate: Sequelize.literal('CURRENT_TIMESTAMP'),
+                    comment: '탈락, 당첨, 갱신',
                 },
             },
             {
                 sequelize,
                 timestamps: false,
                 underscored: true,
-                modelName: 'Evnet',
-                tableName: 'events',
+                modelName: 'UserEvent',
+                tableName: 'user_events',
                 paranoid: false,
                 charset: 'utf8mb4',
                 collate: 'utf8mb4_general_ci',
@@ -55,8 +47,7 @@ module.exports = class Event extends Sequelize.Model {
     }
 
     static associate(models) {
-        this.belongsTo(models.User, { foreignKey: 'user_id' })
-
-        this.hasMany(models.UserEvent, { foreignKey: 'user_event_id' })
+        this.belongsTo(models.User, { foreignKey: 'user_id', onDelete: 'CASCADE' })
+        this.belongsTo(models.Event, { foreignKey: 'event_id' }) // 관리자가 이벤트를 종료해도 참여기록은 남아야함
     }
 }

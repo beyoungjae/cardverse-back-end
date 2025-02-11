@@ -16,3 +16,7 @@ const templateImages = await Image.findAll({
 where: { templateId: someTemplateId },
 order: [['image_order', 'ASC']]
 });
+
+### 파라미터 정리
+
+thumbnail: 썸네일 (카드미리보기)
