@@ -37,7 +37,7 @@ module.exports = class Payment extends Sequelize.Model {
     }
 
     static associate(models) {
-        this.belongsTo(models.User, { foreignKey: 'user_id' })
+        this.belongsTo(models.User, { foreignKey: 'user_id', onDelete: 'CASCADE' })
         this.belongsTo(models.Template, { foreignKey: 'user_template_id' })
     }
 }

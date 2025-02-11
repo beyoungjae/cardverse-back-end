@@ -50,6 +50,7 @@ module.exports = class UserTemplate extends Sequelize.Model {
         this.hasOne(models.TemplateSet, { foreignKey: 'user_template_id' })
         this.hasOne(models.Payment, { foreignKey: 'user_template_id' })
 
+        // onDelete: 'CASCADE' 없는 이유: 관리자가 템플릿을 삭제해도 이미 구매한 템플릿의 데이터는 보존시켜야 함
         this.belongsTo(models.Template, { foreignKey: 'template_id' })
         this.belongsTo(models.User, { foreignKey: 'user_id', onDelete: 'CASCADE' })
     }

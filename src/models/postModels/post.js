@@ -67,6 +67,6 @@ module.exports = class Post extends Sequelize.Model {
     static associate(models) {
         this.hasMany(models.Image)
 
-        this.belongsTo(models.User, {foreignKey: 'user_id', onDelete: 'CASCAD'})
+        this.belongsTo(models.User, {foreignKey: 'user_id', onDelete: 'CASCADE'})
     }
 }

@@ -38,4 +38,7 @@ module.exports = class Notification extends Sequelize.Model {
             },
         )
     }
+    static associatge(models) {
+        this.belongsTo(models.User, { foreignKey: 'user_id', onDelete: 'CASCADE' })
+    }
 }

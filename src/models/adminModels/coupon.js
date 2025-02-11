@@ -4,15 +4,15 @@ module.exports = class Coupon extends Sequelize.Model {
     static init(sequelize) {
         return super.init(
             {
-                couponName: {
+                name: {
                     type: Sequelize.STRING(100),
                     allowNull: false,
                 },
-                couponType: {
+                type: {
                     type: Sequelize.ENUM('PERCENT', 'FIXED'),
                     allowNull: false,
                 },
-                couponValue: {
+                value: {
                     type: Sequelize.DECIMAL(10, 2),
                     allowNull: false,
                 },
