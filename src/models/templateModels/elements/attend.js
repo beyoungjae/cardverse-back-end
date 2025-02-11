@@ -29,6 +29,6 @@ module.exports = class Attend extends Sequelize.Model {
     }
 
     static associate(models) {
-        this.belongsTo(models.TemplateSet, { foreignKey: 'template_set_id' })
+        this.belongsTo(models.TemplateSet, { foreignKey: 'template_set_id', onDelete: 'CASCADE' })
     }
 }

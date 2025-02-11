@@ -34,6 +34,20 @@ module.exports = class Template extends Sequelize.Model {
                     allowNull: true,
                     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
                 },
+                updatedAt: {
+                    type: Sequelize.DATE,
+                    allowNull: true,
+                    defaultValue: null,
+                    onUpdate: Sequelize.literal('CURRENT_TIMESTAMP'),
+                },
+                status: {
+                    type: Sequelize.ENUM(
+                        'draft', // 작성중
+                        'published', // 판매중
+                        'ended', // 판매종료
+                        'deleted', // 삭제됨
+                    ),
+                },
             },
             {
                 sequelize,

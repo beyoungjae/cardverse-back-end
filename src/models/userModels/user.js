@@ -37,6 +37,22 @@ module.exports = class User extends Sequelize.Model {
                     allowNull: false,
                     defaultValue: 'active',
                 },
+                createdAt: {
+                    type: Sequelize.DATE,
+                    allowNull: true,
+                    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
+                },
+                updatedAt: {
+                    type: Sequelize.DATE,
+                    allowNull: true,
+                    defaultValue: null,
+                    onUpdate: Sequelize.literal('CURRENT_TIMESTAMP'),
+                },
+                deletedAt: {
+                    type: Sequelize.DATE,
+                    allowNull: true,
+                    defaultValue: null,
+                },
             },
             {
                 sequelize,
@@ -52,6 +68,6 @@ module.exports = class User extends Sequelize.Model {
     }
 
     static associate(models) {
-        this.hasMany(models.OauthAccount, { foreignKey: 'user_id', })
+        this.hasMany(models.OauthAccount, { foreignKey: 'user_id' })
     }
 }

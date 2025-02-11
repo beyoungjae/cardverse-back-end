@@ -18,12 +18,12 @@ module.exports = class TemplateSet extends Sequelize.Model {
     }
 
     static associate(models) {
-        this.hasMany(models.UserTemplate, { foreignKey: 'user_template_id' })
+        this.belongsTo(models.UserTemplate, { foreignKey: 'user_template_id', onDelete: 'CASCADE' })
 
         this.hasOne(models.Attend, { foreignKey: 'template_set_id' })
         this.hasOne(models.BankAccount, { foreignKey: 'template_set_id' })
         this.hasOne(models.Calendar, { foreignKey: 'template_set_id' })
-        
+
         this.hasOne(models.Gallery, { foreignKey: 'template_set_id' })
         this.hasOne(models.Greeting, { foreignKey: 'template_set_id' })
         this.hasOne(models.Intro, { foreignKey: 'template_set_id' })

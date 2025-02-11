@@ -18,6 +18,7 @@ module.exports = class BackupTemplate extends Sequelize.Model {
                 },
                 createdAt: {
                     type: Sequelize.DATE,
+                    allowNull: false,
                     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
                 },
             },
