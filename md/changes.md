@@ -1,3 +1,5 @@
+## Date : 25/02/14
+
 ### Path: models/adminModels/coupon.js
 
 ```javascript
@@ -44,3 +46,4 @@ status: {
 
 -   **변경사항**
     -   `결제중` $\rightarrow$ `작성중`으로 변경
+
