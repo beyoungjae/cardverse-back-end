@@ -14,7 +14,7 @@ module.exports = class UserTemplate extends Sequelize.Model {
                     type: Sequelize.ENUM('draft', 'active', 'expired', 'deleted'),
                     allowNull: false,
                     defaultValue: 'draft',
-                    comment: 'draft: 결제중 / active: 결제완료 / expired: 만료 / deleted: 삭제',
+                    comment: 'draft: 작성중 / active: 결제완료 / expired: 만료 / deleted: 삭제',
                 },
                 createdAt: {
                     type: Sequelize.DATE,

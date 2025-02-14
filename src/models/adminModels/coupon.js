@@ -4,7 +4,7 @@ module.exports = class Coupon extends Sequelize.Model {
     static init(sequelize) {
         return super.init(
             {
-                name: {
+                label: {
                     type: Sequelize.STRING(100),
                     allowNull: false,
                 },
@@ -12,7 +12,7 @@ module.exports = class Coupon extends Sequelize.Model {
                     type: Sequelize.ENUM('PERCENT', 'FIXED'),
                     allowNull: false,
                 },
-                value: {
+                discount: {
                     type: Sequelize.DECIMAL(10, 2),
                     allowNull: false,
                 },
@@ -21,9 +21,20 @@ module.exports = class Coupon extends Sequelize.Model {
                     allowNull: false,
                     comment: '쿠폰 유효 기간(일)',
                 },
+                minPurchase: {
+                    type: Sequelize.DECIMAL(10, 2),
+                    allowNull: false,
+                    defaultValue: 0,
+                },
+                maxDiscount: {
+                    type: Sequelize.DECIMAL(10, 2),
+                    allowNull: false,
+                    defaultValue: 0,
+                },
                 isActive: {
                     type: Sequelize.BOOLEAN,
                     allowNull: false,
+                    defaultValue: true,
                 },
                 createdAt: {
                     type: Sequelize.DATE,
