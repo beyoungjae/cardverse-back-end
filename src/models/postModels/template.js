@@ -65,6 +65,6 @@ module.exports = class Template extends Sequelize.Model {
    static associate(models) {
       this.belongsTo(models.User, { foreignKey: 'user_id' }) // 관리자 작성이니 CASCADE 설정x
       this.hasMany(models.UserTemplate, { foreignKey: 'template_id' })
-      this.hasMany(models.Images, { foreignKey: 'template_id' })
+      this.hasMany(models.Image, { foreignKey: 'template_id' })
    }
 }
