@@ -9,28 +9,33 @@ exports.uploadImages = async (req, res) => {
          return res.status(400).json({ message: '업로드할 이미지가 없습니다.' })
       }
 
-      const uploadedImages = await Promise.all(
-         req.files.map(async (file, index) => {
-            const optimizedFileName = `opt-${Date.now()}-${file.originalname}`
-            const optimizedPath = path.join('uploads', optimizedFileName)
+      const uploadPromises = req.files.map(async (file, index) => {
+         const optimizedFileName = `opt-${Date.now()}-${file.originalname}`
+         const optimizedPath = path.join('uploads', optimizedFileName)
 
-            await sharp(file.path).resize(1920, null, { withoutEnlargement: true }).jpeg({ quality: 80 }).toFile(optimizedPath)
-
-            await fs.unlink(file.path)
-
-            const image = await Image.create({
-               imageUrl: `${process.env.BACKEND_URL}/uploads/${optimizedFileName}`,
-               imageOrder: index + 1,
+         await sharp(file.path)
+            .resize(1920, null, {
+               withoutEnlargement: true,
+               fastShrinkOnLoad: true,
             })
+            .jpeg({
+               quality: 80,
+               mozjpeg: true,
+               force: false,
+            })
+            .toFile(optimizedPath)
 
-            return {
-               id: image.id,
-               url: image.imageUrl,
-               order: image.imageOrder,
-            }
+         await fs.unlink(file.path).catch((err) => console.error('원본 파일 삭제 실패:', err))
+
+         const imageUrl = `${process.env.BACKEND_URL}/uploads/${optimizedFileName}`
+
+         return Image.create({
+            imageUrl,
+            imageOrder: index + 1,
          })
-      )
+      })
 
+      const uploadedImages = await Promise.all(uploadPromises)
       res.status(201).json(uploadedImages)
    } catch (error) {
       console.error('이미지 업로드 에러:', error)
@@ -47,9 +52,17 @@ exports.deleteImage = async (req, res) => {
          return res.status(404).json({ message: '이미지를 찾을 수 없습니다.' })
       }
 
-      // 파일 시스템에서 이미지 삭제
-      const filePath = path.join(__dirname, '..', '..', image.imageUrl)
-      await fs.unlink(filePath).catch((err) => console.error('파일 삭제 실패:', err))
+      // URL에서 파일명만 추출
+      const fileName = image.imageUrl.split('/').pop()
+
+      // 실제 파일 시스템 경로 구성
+      const filePath = path.join(__dirname, '../../uploads', fileName)
+
+      // 파일 삭제
+      await fs.unlink(filePath).catch((err) => {
+         console.error('파일 삭제 실패:', err)
+         // 파일이 없어도 DB에서는 삭제 진행
+      })
 
       // DB에서 이미지 정보 삭제
       await image.destroy()

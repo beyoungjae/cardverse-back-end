@@ -1,10 +1,12 @@
-const fs = require('fs')
+const fs = require('fs').promises
 const path = require('path')
 
-function uploadLoader() {
+async function uploadLoader() {
    const uploadsDir = path.join(__dirname, '../../uploads')
-   if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir)
+   try {
+      await fs.access(uploadsDir)
+   } catch (error) {
+      await fs.mkdir(uploadsDir)
    }
 }
 
