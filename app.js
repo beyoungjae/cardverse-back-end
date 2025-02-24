@@ -4,6 +4,7 @@ const morgan = require('morgan')
 const path = require('path')
 const cookieParser = require('cookie-parser')
 const session = require('express-session')
+const fs = require('fs')
 require('dotenv').config()
 
 const app = express()
@@ -39,8 +40,17 @@ app.use(
 )
 
 // ✅ 라우터 설정
-app.use('/api/templates', require('./src/routes/templateRoutes'))
-app.use('/api/reviews', require('./src/routes/reviewRoutes'))
+app.use('/templates', require('./src/routes/templateRoutes'))
+app.use('/reviews', require('./src/routes/reviewRoutes'))
+
+// 📷 이미지 라우터 등록
+app.use('/images', require('./src/routes/imageRoutes'))
+
+// 📷 uploads 폴더 생성
+const uploadsDir = path.join(__dirname, 'uploads')
+if (!fs.existsSync(uploadsDir)) {
+   fs.mkdirSync(uploadsDir)
+}
 
 // ✅ 잘못된 라우터 요청 처리 (404)
 app.use((req, res, next) => {
