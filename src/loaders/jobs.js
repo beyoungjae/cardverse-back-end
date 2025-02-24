@@ -84,20 +84,31 @@
 
 // src/loaders/jobLoader.js
 const cron = require('node-cron')
-const { EmailSequenceJob, ScheduleSequenceJob } = require('../jobs')
+// const jobs = require('../jobs')
+const EmailSequenceJob = require('../jobs/emailSequence')
+const ScheduleSequenceJob = require('../jobs/scheduleSequence')
+// const EmailSequenceJob = jobs.EmailSequenceJob
+// const ScheduleSequenceJob = jobs.ScheduleSequenceJob
 
 const jobLoader = () => {
-   // 메일 서비스 작업 정의
-   cron.schedule(EmailSequenceJob.schedule, EmailSequenceJob.handler, {
-      scheduled: true,
-      timezone: 'Asia/Seoul',
-   })
+   console.log('Jobs:', jobs) // 디버깅용
+   console.log('EmailSequenceJob:', EmailSequenceJob) // 디버깅용
+   console.log('ScheduleSequenceJob:', ScheduleSequenceJob) // 디버깅용
 
-   // 스케줄러 작업 정의
-   cron.schedule(ScheduleSequenceJob.schedule, ScheduleSequenceJob.handler, {
-      scheduled: true,
-      timezone: 'Asia/Seoul',
-   })
+   // handler가 함수인지 확인
+   if (typeof EmailSequenceJob.handler === 'function') {
+      cron.schedule(EmailSequenceJob.schedule, EmailSequenceJob.handler, {
+         scheduled: true,
+         timezone: 'Asia/Seoul',
+      })
+   }
+
+   if (typeof ScheduleSequenceJob.handler === 'function') {
+      cron.schedule(ScheduleSequenceJob.schedule, ScheduleSequenceJob.handler, {
+         scheduled: true,
+         timezone: 'Asia/Seoul',
+      })
+   }
 
    console.log('✅ All jobs scheduled')
 }
