@@ -58,3 +58,21 @@ npm install node-cron nodemailer handlebars
 -  `node-cron`: 스케줄링
 -  `nodemailer`: 이메일 발송
 -  `handlebars`: 이메일 템플릿
+
+## Date : 25/02/25
+
+### Path: models/adminModels/coupon.js
+
+▼ 추가 코드
+
+```javascript
+signupType: {
+type: Sequelize.ENUM('referrer', 'user'),
+allowNull: false,
+defaultValue: 'email',
+},
+```
+
+-  signupType: 가입유형
+   -  referrer: 추천인
+   -  user: 일반사용자

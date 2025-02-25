@@ -3,6 +3,8 @@ function routeLoader(app) {
    app.use('/templates', require('../routes/templateRoutes'))
    app.use('/reviews', require('../routes/reviewRoutes'))
    app.use('/images', require('../routes/imageRoutes'))
+   app.use('/auth', require('../api/routes/authRoutes'))
+   app.use('/oauth', require('../api/routes/oauthRoutes'))
 
    // 404 처리
    app.use((req, res, next) => {
