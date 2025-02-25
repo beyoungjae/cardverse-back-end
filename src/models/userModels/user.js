@@ -37,6 +37,7 @@ module.exports = class User extends Sequelize.Model {
                allowNull: false,
                defaultValue: 'active',
             },
+            
             createdAt: {
                type: Sequelize.DATE,
                allowNull: true,

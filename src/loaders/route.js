@@ -1,4 +1,5 @@
 function routeLoader(app) {
+
    // 라우터 등록
    app.use('/templates', require('../routes/templateRoutes'))
    app.use('/reviews', require('../routes/reviewRoutes'))

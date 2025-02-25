@@ -71,7 +71,7 @@ router.post('/signup', isNotLoggedIn, async (req, res, next) => {
 
 //로그인 localhost:8000/auth/login
 router.post('/login', isNotLoggedIn, async (req, res, next) => {
-   passport.authenticate('local', (authError, user, info) => {
+   passport.authenticate('local', async (authError, user, info) => {
       if (authError) {
          console.error('Auth Error:', authError)
          return res.status(500).json({
@@ -87,7 +87,7 @@ router.post('/login', isNotLoggedIn, async (req, res, next) => {
          })
       }
 
-      req.login(user, (loginError) => {
+      req.login(user, async (loginError) => {
          if (loginError) {
             console.error('Login Error:', loginError)
             return res.status(500).json({
@@ -96,18 +96,31 @@ router.post('/login', isNotLoggedIn, async (req, res, next) => {
             })
          }
 
-         const userInfo = {
-            id: user.id,
-            email: user.email,
-            nick: user.nick,
-            role: user.role,
-         }
+         try {
+            // lastLogin 업데이트 추가
+            await User.update({ lastLogin: new Date() }, { where: { id: user.id } })
 
-         res.json({
-            success: true,
-            message: '로그인 성공',
-            user: userInfo,
-         })
+            const userInfo = {
+               id: user.id,
+               email: user.email,
+               nick: user.nick,
+               role: user.role,
+            }
+
+            res.json({
+               success: true,
+               message: '로그인 성공',
+               user: userInfo,
+            })
+         } catch (error) {
+            console.error('LastLogin Update Error:', error)
+            // 로그인은 성공했으므로 에러를 던지지 않고 계속 진행
+            res.json({
+               success: true,
+               message: '로그인 성공',
+               user: userInfo,
+            })
+         }
       })
    })(req, res, next)
 })
@@ -151,30 +164,5 @@ router.get('/status', async (req, res, next) => {
       })
    }
 })
-
-// 카카오 로그인 시작
-router.get('/kakao', passport.authenticate('kakao'))
-
-// 카카오 로그인 콜백 처리
-router.get(
-   '/kakao/callback',
-   passport.authenticate('kakao', {
-      failureRedirect: '/', // 실패시 리다이렉트 경로
-   }),
-   (req, res) => {
-      const userInfo = {
-         id: req.user.id,
-         email: req.user.email,
-         nick: req.user.nick,
-         role: req.user.role,
-      }
-
-      res.json({
-         success: true,
-         message: '카카오 로그인 성공',
-         user: userInfo,
-      })
-   },
-)
 
 module.exports = router

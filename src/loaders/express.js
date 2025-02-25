@@ -15,10 +15,10 @@ function expressLoader(app) {
    )
 
    // 기본 미들웨어
+   app.use(morgan('dev'))
    app.use(express.json())
    app.use(express.urlencoded({ extended: false }))
    app.use(cookieParser(process.env.COOKIE_SECRET))
-   app.use(morgan('dev'))
 
    // 정적 파일 서빙 설정
    app.use('/uploads', express.static(path.join(__dirname, '../../uploads')))
