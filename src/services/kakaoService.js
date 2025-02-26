@@ -11,9 +11,7 @@ class KakaoService {
 
    // ✅ 카카오 OAuth 토큰 요청
    async getTokenKakao(code) {
-      console.log('카카오서비스 겟토큰카카오 code:', code)
       try {
-         logger.debug('getToken', code)
          let response = await this.axios.post(this.KAKAO_AUTH_URL, null, {
             params: {
                grant_type: 'authorization_code',
@@ -23,8 +21,6 @@ class KakaoService {
             },
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
          })
-         //  logger.debug(response)
-         console.log('response 체크:', response.data)
 
          response.data // 원본데이터
 
@@ -35,15 +31,15 @@ class KakaoService {
       }
    }
 
-   async transformKakaoTokenData(responseData) {
-      const idToken = responseData['id_token']
+   async transformKakaoTokenData(responseToken) {
+      const idToken = responseToken['id_token']
       const providerUserId = await authService.getProviderUserIdFromIdToken(idToken)
 
       let tokenData = {
-         ...responseData,
+         ...responseToken,
          providerUserId,
          provider: 'kakao',
-         tokenExpiresAt: new Date(Date.now() + responseData.expires_in * 1000),
+         tokenExpiresAt: new Date(Date.now() + responseToken.expires_in * 1000),
       }
       delete tokenData.token_type
       delete tokenData.expires_in
@@ -55,7 +51,6 @@ class KakaoService {
       delete tokenData.access_token
       delete tokenData.refresh_token
 
-      logger.info(tokenData)
       const accessToken = tokenData.accessToken
 
       return { tokenData, accessToken }
@@ -63,7 +58,6 @@ class KakaoService {
 
    // ✅ 카카오 사용자 정보 조회
    async getKakaoUserInfo(accessToken) {
-      logger.debug(accessToken)
       try {
          const response = await this.axios.get(this.KAKAO_USER_INFO_URL, {
             headers: { Authorization: `Bearer ${accessToken}` },

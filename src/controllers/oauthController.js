@@ -8,32 +8,52 @@ exports.kakaoCallback = async (req, res) => {
    try {
       const { code } = req.body
 
-      const responseTokenData = await kakaoService.getTokenKakao(code)
-      const { tokenData, accessToken } = await kakaoService.transformKakaoTokenData(responseTokenData)
-      const { id: kakaoId } = await kakaoService.getKakaoUserInfo(accessToken)
+      // 1. kakaoService 로직
+      const responseToken = await kakaoService.getTokenKakao(code)
 
-      const virtualEmail = await authService.generateVirtualEmail('kakao', kakaoId)
+      const transformToken = await kakaoService.transformKakaoTokenData(responseToken)
 
-      const { oauthAccount, created, isDefaultNick } = await authService.findOrCreateUser({ tokenData, virtualEmail })
+      const accessToken = transformToken.accessToken
 
-      const loginData = cleanLoginData(req, 'kakao')
+      const { id: providerUserId } = await kakaoService.getKakaoUserInfo(accessToken)
 
-      const loginHistoryData = { loginData, userId: oauthAccount.User.id }
+      logger.debug(accessToken)
 
-      await authService.recordLoginHistory(loginHistoryData)
+      // 2. authService 로직
+      // 2-1. 가상 메일 생성
+      // const virtualEmail = await authService.generateVirtualEmail('kakao', providerUserId)
 
-      logger.info('oauthAccount:', oauthAccount)
-      logger.debug('created:', created)
-      logger.info('isDefaultNick:', isDefaultNick)
+      const { virtualEmail, exists, user } = await authService.generateVirtualEmail('kakao', providerUserId)
 
-      const oauthData = {
-         oauthAccount,
-         created,
-         isDefaultNick,
-      }
+      // logger.warn('virtualEmail:', virtualEmail)
+      // logger.warn('exists:', exists)
+      // logger.warn('user:', user)
 
-      return authController.processOAuthLogin(oauthData, req, res)
+      // const userData = {}
+
+      // if (exists) {
+      //    await authService.updateUser(user)
+      // }
+
+      // await authService.createUser(virtualEmail, provider, providerUserId, tokenData)
+
+      // // 2-2. 소셜 로그인 찾기 및 생성
+      // const { oauthAccount, created } = await authService.findOrCreateUser(tokenData, virtualEmail, '카카오', providerUserId)
+
+      // const userId = oauthAccount.User.id
+
+      // await authService.recordLoginHistory(userId, 'kakao', req)
+
+      // logger.info('oauthAccount:', oauthAccount)
+      // logger.debug('created:', created)
+
+      // const oauthData = {
+      //    oauthAccount,
+      //    created,
+      // }
+
+      // return authController.processOAuthLogin(oauthData, req, res)
    } catch (error) {
-      next(error) // 에러 처리 미들웨어로 전달
+      // next(error) // 에러 처리 미들웨어로 전달
    }
 }
