@@ -50,10 +50,10 @@ exports.createTemplate = async (req, res) => {
          title: req.body.title,
          price: parseFloat(req.body.price),
          category: req.body.category,
-         thumbnailUrl,
+         thumbnail: thumbnailUrl,
          detailImageUrls,
          data: templateData,
-         status: 'active',
+         status: 'published', // draft = 작성중, published = 판매중, ended = 판매종료, deleted = 삭제됨
       })
 
       res.status(201).json({
