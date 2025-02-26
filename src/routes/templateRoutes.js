@@ -1,16 +1,14 @@
 const express = require('express')
 const router = express.Router()
-const multer = require('multer')
-const upload = multer({ dest: 'uploads/' })
 const Template = require('../models/postModels/template')
 
-const { createTemplate, getTemplates, getTemplateById, updateTemplate, deleteTemplate } = require('../controllers/templateController')
+const { createTemplate, getTemplates, getTemplateById, updateTemplate, deleteTemplate, upload } = require('../controllers/templateController')
 
 // 템플릿 생성
-router.post('/', async (req, res) => {
+router.post('/', upload, async (req, res) => {
    try {
-      const template = await Template.create(req.body)
-      res.status(201).json(template)
+      // createTemplate 함수 내부에서 파일 및 텍스트 필드 파싱 후 처리
+      await createTemplate(req, res)
    } catch (error) {
       res.status(400).json({ message: error.message })
    }

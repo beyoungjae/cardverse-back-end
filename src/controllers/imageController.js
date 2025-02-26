@@ -86,3 +86,31 @@ exports.updateImageOrder = async (req, res) => {
       res.status(500).json({ message: '이미지 순서 업데이트 중 오류가 발생했습니다.' })
    }
 }
+
+// 단일 파일 처리용 uploadImage 함수 추가
+exports.uploadImage = async (file) => {
+   try {
+      // 고유 파일 이름 생성
+      const optimizedFileName = `opt-${Date.now()}-${file.originalname}`
+      const optimizedPath = path.join('uploads', optimizedFileName)
+
+      // 메모리 스토리지 사용 시 file.buffer를 사용합니다.
+      await sharp(file.buffer)
+         .resize(1920, null, {
+            withoutEnlargement: true,
+            fastShrinkOnLoad: true,
+         })
+         .jpeg({
+            quality: 80,
+            mozjpeg: true,
+            force: false,
+         })
+         .toFile(optimizedPath)
+
+      const imageUrl = `${process.env.BACKEND_URL}/uploads/${optimizedFileName}`
+      return imageUrl
+   } catch (error) {
+      console.error('uploadImage error:', error)
+      throw error
+   }
+}
