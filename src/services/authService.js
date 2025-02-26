@@ -1,68 +1,173 @@
-const { User, OauthAccount } = require('../models')
+const jwt = require('jsonwebtoken')
+const logger = require('../config/logger')
+const User = require('../models/userModels/user')
+const OauthAccount = require('../models/userModels/oauthAccount')
+const LoginHistory = require('../models/userModels/loginHistory')
 
-const kakaoAuthService = {
-   async findOrCreateKakaoUser(kakaoProfile) {
-      try {
-         // 1. 먼저 카카오 계정으로 기존 OAuth 계정 찾기
-         const existingOAuth = await OauthAccount.findOne({
-            where: {
-               provider: 'kakao',
-               providerUserId: kakaoProfile.id.toString(),
+class AuthService {
+   constructor() {}
+
+   // it_token을 디코딩 => provider_user_id 추출
+   async getProviderUserIdFromIdToken(id_token) {
+      console.log(id_token)
+
+      if (!id_token) throw new Error('id_token이 없습니다.')
+
+      const decoded = jwt.decode(id_token)
+      if (!decoded || !decoded.sub) throw new Error('id_token에 sub 값이 없습니다.')
+
+      logger.info(decoded)
+
+      return decoded.sub
+   }
+
+   // 소셜로그인시 계정 확인 및 생성
+   async findOrCreateUser({ tokenData, virtualEmail }) {
+      logger.info(tokenData)
+      logger.info(virtualEmail)
+
+      if (!tokenData) {
+         logger.error('tokenData가 없습니다')
+         throw new Error('tokenData가 없습니다.')
+      }
+
+      const [oauthAccount, created] = await OauthAccount.findOrCreate({
+         where: {
+            provider: tokenData.provider,
+            providerUserId: tokenData.providerUserId,
+         },
+         include: [
+            {
+               model: User,
+               foreignKey: 'user_id',
             },
-            include: [{ model: User }],
+         ],
+         defaults: {
+            // 새로 생성될 때만 적용되는 값들
+            accessToken: tokenData.accessToken,
+            refreshToken: tokenData.refreshToken,
+            tokenExpiresAt: tokenData.tokenExpiresAt,
+         },
+      })
+
+      logger.debug(oauthAccount)
+      logger.debug(created)
+
+      if (created) {
+         // 새 계정일 경우
+         const userCount = await User.count()
+         const defaultNick = `회원${userCount + 1}`
+
+         // User 생성
+         const user = await User.create({
+            email: virtualEmail,
+            nick: defaultNick,
+            role: 'user',
+            status: 'active',
          })
 
-         if (existingOAuth) {
-            // 기존 연동된 계정이 있으면 토큰만 업데이트
-            await existingOAuth.update({
-               accessToken: kakaoProfile.access_token,
-               tokenExpiresAt: new Date(Date.now() + kakaoProfile.expires_in * 1000),
-            })
-            return existingOAuth.User
-         }
-
-         // 2. 카카오 이메일로 기존 유저 찾기
-         const kakaoEmail = kakaoProfile.kakao_account?.email
-         let user = null
-
-         if (kakaoEmail) {
-            user = await User.findOne({
-               where: { email: kakaoEmail },
-            })
-         }
-
-         if (!user) {
-            // 3. 새 유저 생성
-            user = await User.create({
-               email: kakaoEmail || `kakao_${kakaoProfile.id}@example.com`,
-               nick: kakaoProfile.kakao_account?.profile?.nickname || `User${Date.now()}`,
-               role: 'user',
-               status: 'active',
-               lastLogin: new Date(),
-            })
-         }
-
-         // 4. OAuth 계정 정보 생성 및 연결
-         await OauthAccount.create({
+         // user_id만 업데이트 (나머지는 defaults에서 이미 설정됨)
+         await oauthAccount.update({
             user_id: user.id,
-            provider: 'kakao',
-            providerUserId: kakaoProfile.id.toString(),
-            accessToken: kakaoProfile.access_token,
-            refreshToken: kakaoProfile.refresh_token,
-            tokenExpiresAt: new Date(Date.now() + kakaoProfile.expires_in * 1000),
+         })
+      } else {
+         // 기존 계정이면 토큰 정보 업데이트
+         await oauthAccount.update({
+            accessToken: tokenData.accessToken,
+            refreshToken: tokenData.refreshToken,
+            tokenExpiresAt: tokenData.tokenExpiresAt,
+         })
+      }
+
+      const fullOauthAccount = await OauthAccount.findOne({
+         where: {
+            provider: tokenData.provider,
+            providerUserId: tokenData.providerUserId,
+         },
+         include: [
+            {
+               model: User,
+               foreignKey: 'user_id',
+            },
+         ],
+      })
+
+      return {
+         oauthAccount: fullOauthAccount,
+         created,
+         isDefaultNick: created,
+      }
+   }
+
+   // 소셜 로그인시 가상 이메일 생성
+   async generateVirtualEmail(provider, oauthUserId) {
+      return `${provider}${oauthUserId}@temp.com`
+   }
+
+   async recordLoginHistory({ loginData, userId }) {
+      logger.info('로그인 히스토리 기록 시작:', { userId, loginData })
+
+      try {
+         const loginHistory = await LoginHistory.create({
+            userId: userId,
+            loginType: loginData.loginType,
+            ipAddress: loginData.ipAddress,
+            userAgent: loginData.userAgent,
          })
 
-         return user
+         logger.info('로그인 히스토리 기록 완료:', loginHistory)
+         return loginHistory
       } catch (error) {
-         console.error('Kakao auth service error:', error)
+         logger.error('로그인 히스토리 기록 실패:', error)
          throw error
       }
-   },
+   }
 
-   // 로그인 시 lastLogin 업데이트
-   async updateLastLogin(userId) {
-      await User.update({ lastLogin: new Date() }, { where: { id: userId } })
-   },
+   async getLoginHistory(userId) {
+      try {
+         const loginHistory = await LoginHistory.findOne({
+            where: { userId },
+            order: [['loginAt', 'DESC']], // 최신 로그인 기록
+         })
+
+         // logger.debug('loginHistory:', loginHistory)
+         return loginHistory
+      } catch (error) {
+         logger.error('로그인 히스토리 조회 실패:', error)
+         throw error
+      }
+   }
+
+   // 포맷 oauth 리스폰데이터
+   async formatOAuthResponse({ oauthData, loginHistory }) {
+      try {
+         const { oauthAccount, created, isDefaultNick } = oauthData
+
+         return {
+            success: true,
+            message: created ? '새로운 계정이 생성되었습니다.' : '로그인 성공',
+            data: {
+               user: {
+                  id: oauthAccount.User.id,
+                  email: oauthAccount.User.email,
+                  nick: oauthAccount.User.nick,
+                  role: oauthAccount.User.role,
+               },
+               accessToken: oauthAccount.accessToken,
+               isNewUser: created,
+               isDefaultNick,
+               notifications: {
+                  shouldChangeNickname: isDefaultNick,
+                  nicknameMessage: isDefaultNick ? '프로필에서 닉네임을 변경해주세요.' : null,
+               },
+               loginHistory,
+            },
+         }
+      } catch (error) {
+         logger.error('OAuth 응답 데이터 포맷 실패:', error)
+         throw new Error('로그인 응답 처리 중 오류가 발생했습니다.')
+      }
+   }
 }
 
-module.exports = kakaoAuthService
+module.exports = new AuthService()

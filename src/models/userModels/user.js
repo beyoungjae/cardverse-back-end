@@ -21,7 +21,11 @@ module.exports = class User extends Sequelize.Model {
             nick: {
                type: Sequelize.STRING(50),
                allowNull: false,
-               unique: true,
+               unique: 
+               {
+                  name: 'idx_nick',
+                  msg:'이미 사용중인 닉네임입니다.'
+               }
             },
 
             role: {
