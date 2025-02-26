@@ -111,11 +111,11 @@ exports.updateTemplate = async (req, res) => {
 
       // 이미지 업데이트가 있는 경우
       if (req.files?.thumbnail) {
-         template.thumbnailUrl = await imageController.uploadImage(req.files.thumbnail[0])
+         template.thumbnail = await imageController.uploadImage(req.files.thumbnail[0])
       }
 
       if (req.files?.detailImages) {
-         template.detailImageUrls = await Promise.all(req.files.detailImages.map((file) => imageController.uploadImage(file)))
+         template.detailImages = await Promise.all(req.files.detailImages.map((file) => imageController.uploadImage(file)))
       }
 
       // 기타 필드 업데이트
