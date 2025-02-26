@@ -1,11 +1,13 @@
 const express = require('express')
+const init = require('./src/loaders')
 require('dotenv').config()
 
 const app = express()
 
 async function startServer() {
    try {
-      await require('./src/loaders')(app)
+      // await require('./src/loaders')(app)
+       await init(app)
 
       const PORT = process.env.PORT || 8000
       app.listen(PORT, () => {

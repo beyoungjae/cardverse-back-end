@@ -4,6 +4,7 @@ const morgan = require('morgan')
 const cookieParser = require('cookie-parser')
 const session = require('express-session')
 const path = require('path')
+require('dotenv').config()
 
 function expressLoader(app) {
    // CORS 설정
@@ -11,7 +12,7 @@ function expressLoader(app) {
       cors({
          origin: process.env.FRONTEND_URL || 'http://localhost:3000',
          credentials: true,
-      })
+      }),
    )
 
    // 기본 미들웨어
@@ -37,7 +38,7 @@ function expressLoader(app) {
          },
          name: 'cardverse.sid',
          rolling: true, // 세션 만료 시간 갱신
-      })
+      }),
    )
 
    // CORS Preflight

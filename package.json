@@ -5,7 +5,7 @@
    "scripts": {
       "test": "echo \"Error: no test specified\" && exit 1",
       "start": "node app.js",
-      "dev": "nodemon app.js"
+      "dev": "nodemon"
    },
    "keywords": [],
    "author": "chaos",
@@ -37,7 +37,8 @@
       "passport-kakao": "^1.0.1",
       "passport-local": "^1.0.0",
       "sequelize": "^6.37.5",
-      "sharp": "^0.33.5"
+      "sharp": "^0.33.5",
+      "winston": "^3.17.0"
    },
    "devDependencies": {
       "nodemon": "^3.1.9",

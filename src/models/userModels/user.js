@@ -7,7 +7,10 @@ module.exports = class User extends Sequelize.Model {
             email: {
                type: Sequelize.STRING(255),
                allowNull: false,
-               unique: true,
+               unique: {
+                  name: 'idx_email',
+                  msg: '이미 사용중인 이메일입니다.',
+               },
             },
 
             password: {
@@ -37,7 +40,7 @@ module.exports = class User extends Sequelize.Model {
                allowNull: false,
                defaultValue: 'active',
             },
-            
+
             createdAt: {
                type: Sequelize.DATE,
                allowNull: true,
@@ -64,7 +67,7 @@ module.exports = class User extends Sequelize.Model {
             paranoid: false,
             charset: 'utf8mb4',
             collate: 'utf8mb4_general_ci',
-         }
+         },
       )
    }
 
