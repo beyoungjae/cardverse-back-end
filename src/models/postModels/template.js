@@ -12,6 +12,10 @@ module.exports = class Template extends Sequelize.Model {
                type: Sequelize.STRING(255),
                allowNull: false,
             },
+            detailImages: {
+               type: Sequelize.JSON,
+               allowNull: false,
+            },
             category: {
                type: Sequelize.ENUM('wedding', 'invitation', 'newyear', 'gohyeon'),
                allowNull: false,

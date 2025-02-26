@@ -30,12 +30,18 @@ router.get('/', async (req, res) => {
 // 템플릿 상세 조회
 router.get('/:id', async (req, res) => {
    try {
+      console.log(`🔎 요청된 템플릿 ID: ${req.params.id}`) // 요청된 ID 확인
       const template = await Template.findByPk(req.params.id)
+
       if (!template) {
+         console.log(`❌ 템플릿 ${req.params.id} 없음!`)
          return res.status(404).json({ message: '템플릿을 찾을 수 없습니다.' })
       }
+
+      console.log(`✅ 템플릿 ${req.params.id} 조회 성공!`)
       res.json(template)
    } catch (error) {
+      console.error(`🔥 오류 발생: ${error.message}`)
       res.status(500).json({ message: error.message })
    }
 })

@@ -51,7 +51,7 @@ exports.createTemplate = async (req, res) => {
          price: parseFloat(req.body.price),
          category: req.body.category,
          thumbnail: thumbnailUrl,
-         detailImageUrls,
+         detailImages: detailImageUrls,
          data: templateData,
          status: 'published', // draft = 작성중, published = 판매중, ended = 판매종료, deleted = 삭제됨
       })
@@ -72,10 +72,10 @@ exports.createTemplate = async (req, res) => {
 
 exports.getTemplates = async (req, res) => {
    try {
-      const { category, status = 'active' } = req.query
-      const where = { status }
+      const { category } = req.query
+      const where = { status: 'published' } // 판매중에서 찾기
 
-      if (category) {
+      if (category && ['wedding', 'invitation', 'newyear', 'gohyeon'].includes(category)) {
          where.category = category
       }
 
@@ -84,10 +84,10 @@ exports.getTemplates = async (req, res) => {
          order: [['createdAt', 'DESC']],
       })
 
-      res.json({
-         success: true,
-         templates,
-      })
+      console.log('템플릿 조회 조건:', where)
+      console.log('조회된 템플릿 개수:', templates.length)
+
+      res.json({ success: true, templates })
    } catch (error) {
       res.status(500).json({
          success: false,
