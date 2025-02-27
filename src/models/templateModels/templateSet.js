@@ -3,7 +3,13 @@ const Sequelize = require('sequelize')
 module.exports = class TemplateSet extends Sequelize.Model {
    static init(sequelize) {
       return super.init(
-         {},
+         {
+            formData: {
+               type: Sequelize.TEXT('long'),
+               allowNull: true,
+               comment: '사용자 커스텀 템플릿 데이터 (JSON 문자열)',
+            },
+         },
          {
             sequelize,
             timestamps: false,
