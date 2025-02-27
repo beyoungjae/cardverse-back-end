@@ -4,6 +4,8 @@ const morgan = require('morgan')
 const cookieParser = require('cookie-parser')
 const session = require('express-session')
 const path = require('path')
+const logger = require('../config/logger')
+const AppError = require('../utils/AppError')
 require('dotenv').config()
 
 function expressLoader(app) {
@@ -43,6 +45,13 @@ function expressLoader(app) {
 
    // CORS Preflight
    app.options('*', cors())
+
+   // 공통 미들웨어로 logger와 AppError 추가
+   app.use((req, res, next) => {
+      req.logger = logger // 요청 객체에 logger 추가
+      req.AppError = AppError // 요청 객체에 AppError 추가
+      next()
+   })
 }
 
 module.exports = expressLoader

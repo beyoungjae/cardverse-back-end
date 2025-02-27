@@ -1,5 +1,12 @@
 exports.getClientIp = (req) => {
-   const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip || '0.0.0.0'
+   let ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip || '0.0.0.0'
+
+   // IPv6 → IPv4 변환
+   if (ipAddress === '::1') {
+      ipAddress = '127.0.0.1'
+   } else if (ipAddress.includes('::ffff:')) {
+      ipAddress = ipAddress.split('::ffff:')[1] // IPv4-mapped IPv6 주소 변환
+   }
 
    return ipAddress.split(',')[0].trim()
 }

@@ -8,6 +8,10 @@ const config = {
       host: process.env.DB_HOST || '127.0.0.1',
       dialect: 'mysql',
       logging: false, // 로그 비활성화
+      timezone: '+09:00', // 저장시 9시간 더해서
+      dialectOptions: {
+         timezone: '+09:00', // 뺴올시 9시간 빼서
+      },
    },
    test: {
       username: process.env.DB_USER,
@@ -16,6 +20,10 @@ const config = {
       host: process.env.DB_HOST,
       dialect: 'mysql',
       logging: false,
+      timezone: '+09:00',
+      dialectOptions: {
+         timezone: '+09:00',
+      },
    },
    production: {
       username: process.env.DB_USER,
@@ -24,6 +32,10 @@ const config = {
       host: process.env.DB_HOST,
       dialect: 'mysql',
       logging: false,
+      timezone: '+09:00',
+      dialectOptions: {
+         timezone: '+09:00',
+      },
    },
 }
 

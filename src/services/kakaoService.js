@@ -1,5 +1,6 @@
 const logger = require('../config/logger')
 const authService = require('./authService')
+const { snakeToCamel } = require('../utils/caseConverter')
 
 class KakaoService {
    constructor(axiosInstance = require('axios')) {
@@ -11,9 +12,8 @@ class KakaoService {
 
    // ✅ 카카오 OAuth 토큰 요청
    async getTokenKakao(code) {
-      console.log('카카오서비스 겟토큰카카오 code:', code)
+      // console.log('카카오서비스 겟토큰카카오 code:', code)
       try {
-         logger.debug('getToken', code)
          let response = await this.axios.post(this.KAKAO_AUTH_URL, null, {
             params: {
                grant_type: 'authorization_code',
@@ -23,47 +23,19 @@ class KakaoService {
             },
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
          })
-         //  logger.debug(response)
-         console.log('response 체크:', response.data)
 
          response.data // 원본데이터
 
-         return response.data
+         return snakeToCamel(response.data)
       } catch (error) {
          console.error('🚨 카카오 토큰 요청 실패:', error.response ? error.response.data : error.message)
          throw new Error('카카오 토큰 요청 실패')
       }
    }
 
-   async transformKakaoTokenData(responseData) {
-      const idToken = responseData['id_token']
-      const providerUserId = await authService.getProviderUserIdFromIdToken(idToken)
-
-      let tokenData = {
-         ...responseData,
-         providerUserId,
-         provider: 'kakao',
-         tokenExpiresAt: new Date(Date.now() + responseData.expires_in * 1000),
-      }
-      delete tokenData.token_type
-      delete tokenData.expires_in
-      delete tokenData.id_token
-      delete tokenData.refresh_token_expires_in
-
-      tokenData.accessToken = tokenData.access_token
-      tokenData.refreshToken = tokenData.refresh_token
-      delete tokenData.access_token
-      delete tokenData.refresh_token
-
-      logger.info(tokenData)
-      const accessToken = tokenData.accessToken
-
-      return { tokenData, accessToken }
-   }
-
+   // 이하 당장은 안쓰는 기능들
    // ✅ 카카오 사용자 정보 조회
    async getKakaoUserInfo(accessToken) {
-      logger.debug(accessToken)
       try {
          const response = await this.axios.get(this.KAKAO_USER_INFO_URL, {
             headers: { Authorization: `Bearer ${accessToken}` },

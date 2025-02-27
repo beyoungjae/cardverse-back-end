@@ -1,5 +1,5 @@
 const logger = require('../config/logger')
-const authService = require('../services/authService')
+const { authService } = require('../services/authService')
 
 exports.processOAuthLogin = async (oauthData, req, res) => {
    try {

@@ -7,7 +7,7 @@ module.exports = class LoginHistory extends Sequelize.Model {
             userId: {
                type: Sequelize.INTEGER,
                allowNull: false,
-               field: 'user_id', // underscored: true 때문에 필요
+               // field: 'user_id', // underscored: true 때문에 필요
             },
 
             loginType: {
