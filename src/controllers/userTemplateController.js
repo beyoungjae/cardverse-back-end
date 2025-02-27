@@ -30,7 +30,7 @@ exports.createUserTemplate = async (req, res) => {
 
       // TemplateSet 생성 및 formData 저장
       const templateSet = await TemplateSet.create({
-         userTemplateId: userTemplate.id,
+         user_template_id: userTemplate.id,
          formData: formDataString,
       })
 
@@ -69,7 +69,7 @@ exports.updateTemplateSet = async (req, res) => {
 
       // TemplateSet 찾기 또는 생성
       let templateSet = await TemplateSet.findOne({
-         where: { userTemplateId: id },
+         where: { user_template_id: id },
       })
 
       if (templateSet) {
@@ -78,7 +78,7 @@ exports.updateTemplateSet = async (req, res) => {
       } else {
          // 새 데이터 생성
          templateSet = await TemplateSet.create({
-            userTemplateId: id,
+            user_template_id: id,
             formData: formDataString,
          })
       }
