@@ -38,10 +38,17 @@ exports.kakaoLogin = async (req, res) => {
       // 7. 필터된 유저정보와 로그인이력을 합치고 프론트에 반환
       const responseData = {
          ...userData,
-         loginHistory: {
-            getLoginHistory,
-         },
+         loginHistory: [...getLoginHistory],
       }
+
+      // 8. 세션저장
+      req.session.user = {
+         id: userData.user.id,
+         email: userData.user.email,
+         nick: userData.user.nick,
+         role: userData.user.role,
+      }
+      req.logger.info('세션정보:', req.session.user)
 
       return res.status(200).json(responseData)
    } catch (error) {

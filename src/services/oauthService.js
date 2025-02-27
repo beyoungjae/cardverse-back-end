@@ -87,7 +87,7 @@ class OAuthService {
             message: '회원가입이 완료되었습니다.',
             user: {
                id: newUser.id,
-               email: provider !== 'local' ? `${provider} 간편 로그인입니다.` : newUser.email,
+               email: newUser.email,
                nick: newUser.nick,
                provider,
             },

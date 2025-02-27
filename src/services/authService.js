@@ -42,7 +42,8 @@ class AuthService {
       const userId = userData.user.id
       try {
          const loginHistory = await LoginHistory.findAll({
-            where: { userId },
+            attributes: ['id', 'loginType', 'ipAddress', 'userAgent', 'loginAt', 'userId'], // 필요한 필드만 선택
+            where: { userId: userId },
             order: [['loginAt', 'DESC']], // 최신 로그인 기록
             limit: 30, // 최대 30개 이력까지
          })

@@ -10,7 +10,9 @@ const config = {
       logging: false, // 로그 비활성화
       timezone: '+09:00', // 저장시 9시간 더해서
       dialectOptions: {
-         timezone: '+09:00', // 뺴올시 9시간 빼서
+         charset: 'utf8mb4',
+         dateStrings: true,
+         typeCast: true,
       },
    },
    test: {
@@ -22,7 +24,9 @@ const config = {
       logging: false,
       timezone: '+09:00',
       dialectOptions: {
-         timezone: '+09:00',
+         charset: 'utf8mb4',
+         dateStrings: true,
+         typeCast: true,
       },
    },
    production: {
@@ -34,7 +38,9 @@ const config = {
       logging: false,
       timezone: '+09:00',
       dialectOptions: {
-         timezone: '+09:00',
+         charset: 'utf8mb4',
+         dateStrings: true,
+         typeCast: true,
       },
    },
 }

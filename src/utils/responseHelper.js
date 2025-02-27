@@ -13,7 +13,7 @@ exports.responseOAuthData = (user, exUser, provider, providerUserId) => {
       status: 'success',
       user: {
          id: user.id,
-         email: user.email === `${provider}${providerUserId}@temp.com` ? `${provider} 로그인입니다.` : user.email,
+         email: user.email,
          nick: user.nick,
          role: user.role,
          lastLogin: user.lastLogin,
@@ -23,7 +23,7 @@ exports.responseOAuthData = (user, exUser, provider, providerUserId) => {
       },
       token: {
          accessToken: exUser.accessToken,
-         refreshToken: exUser.refreshToken,
+        //  refreshToken: exUser.refreshToken,
          tokenExpiresAt: exUser.tokenExpiresAt,
       },
       createdAt: exUser.createdAt,

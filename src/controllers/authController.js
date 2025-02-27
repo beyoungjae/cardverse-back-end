@@ -20,3 +20,5 @@ exports.processOAuthLogin = async (oauthData, req, res) => {
       throw error
    }
 }
+
+exports.getMyProfile = async ()
