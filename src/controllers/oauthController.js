@@ -3,7 +3,7 @@ const { authService } = require('../services/authService')
 const { oauthService } = require('../services/oauthService')
 const logger = require('../config/logger')
 const { kakaoAuth } = require('../services/oauthProviders')
-const { responseOAuthData } = require('../utils/responseHelper')
+const { transformAuthResponse } = require('../utils/responseHelper')
 const jwt = require('jsonwebtoken')
 const axios = require('axios')
 
@@ -56,30 +56,7 @@ exports.kakaoLogin = async (req, res) => {
       }
 
       // 5. 위에서 업데이트된 유저정보를 기반으로 로그인 이력 기록
-      await authService.recordLoginHistory(provider, req, userData)
-
-      // req.logger.debug(getToken.accessToken)
-
-      // const fetchAccessToken = await oauthService.fetchAccessToken(getToken.refreshToken)
-
-      // logger.debug(fetchAccessToken)
-
-      const response = await axios.post('https://kauth.kakao.com/oauth/token', null, {
-         params: {
-            grant_type: 'refresh_token',
-            client_id: process.env.KAKAO_CLIENT_ID,
-            refresh_token: getToken.refreshToken,
-         },
-         headers: {
-            'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
-         },
-      })
-
-      req.logger.info('kakao 리프레시토큰 응답 데이터:', {
-         // status: response.status,
-         data: response.data,
-         // headers: response.headers,
-      })
+      await authService.recordLoginHistory(req, provider, userData)
 
       // 6. 리프레시 토큰을 HttpOnly Secure 쿠키에 저장
       res.cookie('refreshToken', getToken.refreshToken, {
@@ -109,10 +86,34 @@ exports.refreshAccessToken = async (req, res) => {
       const fetchAccessToken = await oauthService.fetchAccessToken(refreshToken)
       const providerUserId = await kakaoAuth.getProviderUserId(fetchAccessToken)
 
-      const responseData = responseOAuthData(user, fetchAccessToken, provider, providerUserId)
+      const responseData = transformAuthResponse(user, fetchAccessToken, provider, providerUserId)
 
       return res.status(200).json(responseData)
-   } catch (error) {}
+   } catch (error) {
+      console.error('Access토큰 재발급 중 오류 발생:', error)
+      next(error)
+   }
+}
+
+exports.kakaoLogout = async (req, res) => {
+   const userId = req.user.id
+   const provider = req.user.provider
+   console.log('로그아웃, user:', req.user)
+   console.log('로그아웃, userId:', req.user.id)
+   console.log('로그아웃, provider:', req.user.provider)
+   try {
+      await oauthService.logoutUser(userId, provider)
+      await oauthService.clearSessionCookies(req, res)
+
+      return res.status(200).json({
+         success: true,
+         message: '로그아웃 성공',
+         user: {},
+      })
+   } catch (error) {
+      console.error('OAuth 로그아웃 중 오류 발생:', error)
+      next(error)
+   }
 }
 
 // 6. 기록하고난 후 최대 30개 로그인 이력 가져옴

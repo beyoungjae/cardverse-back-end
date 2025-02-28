@@ -8,10 +8,10 @@
  * @param {string} providerUserId - 제공자에서의 사용자 ID
  * @returns {Object} 생성된 응답 데이터
  */
-
-exports.responseOAuthData = (user, exUser, provider, providerUserId) => {
+exports.transformAuthResponse = (user, exUser = {}, provider, providerUserId = null, message = '요청에 대한 처리가 성공했습니다.') => {
    return {
-      status: 'success',
+      success: true,
+      message,
       user: {
          id: user.id,
          email: user.email,
@@ -19,14 +19,19 @@ exports.responseOAuthData = (user, exUser, provider, providerUserId) => {
          role: user.role,
          lastLogin: user.lastLogin,
          status: user.status,
-         provider,
-         providerUserId,
+         provider: provider || 'local',
+         providerUserId: providerUserId || null,
       },
       token: {
-         accessToken: exUser.accessToken,
-         tokenExpiresAt: exUser.tokenExpiresAt,
+         accessToken: exUser?.accessToken || null,
+         tokenExpiresAt: exUser?.tokenExpiresAt || null,
       },
-      createdAt: exUser.createdAt,
-      updatedAt: exUser.updatedAt,
+   }
+}
+
+exports.kakaoLogoutData = () => {
+   return {
+      success: false,
+      user: {},
    }
 }

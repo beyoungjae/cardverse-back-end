@@ -5,6 +5,8 @@ const passport = require('passport')
 const bcrypt = require('bcrypt')
 const { isLoggedIn, isNotLoggedIn } = require('../middlewares/isAuth')
 const User = require('../../models/userModels/user') // User 모델 import
+const { userSignup } = require('../middlewares/validators')
+const authController = require('../../controllers/authController')
 
 // 1. 회원가입 (localhost:8000/auth/signup)
 router.post('/signup', isNotLoggedIn, async (req, res, next) => {
@@ -70,61 +72,65 @@ router.post('/signup', isNotLoggedIn, async (req, res, next) => {
    }
 })
 
+router.post('/login', isNotLoggedIn, userSignup, authController.login)
+router.post('/signup', isNotLoggedIn, authController.signup)
+
 //로그인 localhost:8000/auth/login
-router.post('/login', isNotLoggedIn, async (req, res, next) => {
-   passport.authenticate('local', async (authError, user, info) => {
-      if (authError) {
-         console.error('Auth Error:', authError)
-         return res.status(500).json({
-            success: false,
-            message: '인증 중 오류가 발생했습니다.',
-         })
-      }
+// router.post('/login', isNotLoggedIn, async (req, res, next) => {
+//    passport.authenticate('local', async (authError, user, info) => {
+//       if (authError) {
+//          console.error('Auth Error:', authError)
+//          return res.status(500).json({
+//             success: false,
+//             message: '인증 중 오류가 발생했습니다.',
+//          })
+//       }
 
-      if (!user) {
-         return res.status(401).json({
-            success: false,
-            message: info.message || '이메일 또는 비밀번호가 일치하지 않습니다.',
-         })
-      }
+//       if (!user) {
+//          return res.status(401).json({
+//             success: false,
+//             message: info.message || '이메일 또는 비밀번호가 일치하지 않습니다.',
+//          })
+//       }
 
-      req.login(user, async (loginError) => {
-         if (loginError) {
-            console.error('Login Error:', loginError)
-            return res.status(500).json({
-               success: false,
-               message: '로그인 중 오류가 발생했습니다.',
-            })
-         }
+//       req.login(user, async (loginError) => {
+//          if (loginError) {
+//             console.error('Login Error:', loginError)
+//             return res.status(500).json({
+//                success: false,
+//                message: '로그인 중 오류가 발생했습니다.',
+//             })
+//          }
 
-         try {
-            // lastLogin 업데이트 추가
-            await User.update({ lastLogin: new Date() }, { where: { id: user.id } })
+//          try {
+//             // lastLogin 업데이트 추가
+//             await User.update({ lastLogin: new Date() }, { where: { id: user.id } })
 
-            const userInfo = {
-               id: user.id,
-               email: user.email,
-               nick: user.nick,
-               role: user.role,
-            }
+//             const userInfo = {
+//                id: user.id,
+//                email: user.email,
+//                nick: user.nick,
+//                role: user.role,
+//                provider: 'local',
+//             }
 
-            res.json({
-               success: true,
-               message: '로그인 성공',
-               user: userInfo,
-            })
-         } catch (error) {
-            console.error('LastLogin Update Error:', error)
-            // 로그인은 성공했으므로 에러를 던지지 않고 계속 진행
-            res.json({
-               success: true,
-               message: '로그인 성공',
-               user: userInfo,
-            })
-         }
-      })
-   })(req, res, next)
-})
+//             res.json({
+//                success: true,
+//                message: '로그인 성공',
+//                user: userInfo,
+//             })
+//          } catch (error) {
+//             console.error('LastLogin Update Error:', error)
+//             // 로그인은 성공했으므로 에러를 던지지 않고 계속 진행
+//             res.json({
+//                success: true,
+//                message: '로그인 성공',
+//                user: userInfo,
+//             })
+//          }
+//       })
+//    })(req, res, next)
+// })
 
 //로그아웃 localhost:8000/auth/logout
 router.get('/logout', isLoggedIn, async (req, res, next) => {
@@ -156,6 +162,7 @@ router.get('/status', async (req, res, next) => {
             email: req.user.email,
             nick: req.user.nick,
             role: req.user.role,
+            provider: 'local',
          },
       })
    } else {
@@ -165,6 +172,5 @@ router.get('/status', async (req, res, next) => {
       })
    }
 })
-
 
 module.exports = router

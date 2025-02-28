@@ -1,6 +1,7 @@
 exports.isLoggedInOAuth = (req, res, next) => {
    if (req.session.user) {
       // 세션에 사용자 정보가 존재하는지 확인
+      req.user = req.session.user
       next() // 로그인된 경우 다음 미들웨어로 이동
    } else {
       res.status(403).json({

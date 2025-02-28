@@ -26,7 +26,7 @@ async function init(app) {
       routeLoader(app)
       logger.info('✅ 라우터 초기화 완료')
    } catch (error) {
-      logger.error('Loader error:', error) // 에러 로깅
+      console.error('Loader error:', error) // 에러 로깅
    }
 }
 

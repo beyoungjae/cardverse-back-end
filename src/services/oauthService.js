@@ -9,7 +9,7 @@ const axios = require('axios')
 // 유틸
 const { snakeToCamel } = require('../utils/caseConverter')
 const { UTCtoKST, getCurrentKST, formatDate } = require('../utils/timezoneUtil')
-const { responseOAuthData } = require('../utils/responseHelper')
+const { transformAuthResponse } = require('../utils/responseHelper')
 
 class OAuthService {
    constructor(strategy) {
@@ -42,7 +42,7 @@ class OAuthService {
          // 여기까지 check OK
          const user = exUser.User
 
-         const responseData = responseOAuthData(user, exUser, provider, providerUserId)
+         const responseData = transformAuthResponse(user, exUser, provider, providerUserId)
 
          return responseData // ✅ 조회된 유저 정보 반환
       } catch (error) {
@@ -136,13 +136,60 @@ class OAuthService {
 
          const user = updateUserData.User
 
-         const responseData = responseOAuthData(user, updateUserData, provider, providerUserId)
+         const responseData = transformAuthResponse(user, updateUserData, provider, providerUserId)
 
          return responseData
       } catch (error) {
          logger.error('kakao 사용자 정보 업데이트중 오류가 발생했습니다.', error) // 자동으로 error.stack 포함
          throw new Error(`kakao 사용자 정보 업데이트중 오류가 발생했습니다. ${error.message}`)
       }
+   }
+
+   async logoutUser(userId, provider) {
+      try {
+         const logout = await OauthAccount.update(
+            {
+               accessToken: null, // 업데이트할 필드
+               refreshToken: null, // 업데이트할 필드
+               tokenExpiresAt: null,
+               updatedAt: formatDate(),
+            },
+            {
+               where: { user_id: userId, provider }, // 조건
+            },
+         )
+
+         console.log('logout Checking:', logout)
+      } catch (error) {
+         console.error(`${provider} 사용자 로그아웃중 오류가 발생`, error)
+         throw new Error(error.message)
+      }
+   }
+
+   async clearSessionCookies(req, res) {
+      return new Promise((resolve, reject) => {
+         try {
+            req.session.destroy((err) => {
+               if (err) {
+                  console.error('세션 삭제 중 오류 발생:', err)
+                  return reject(err)
+               }
+
+               // ✅ 세션 삭제 후 쿠키 삭제
+               res.clearCookie('refreshToken', {
+                  httpOnly: true,
+                  secure: process.env.NODE_ENV === 'production',
+                  sameSite: 'Strict',
+               })
+
+               console.log('세션 및 쿠키 삭제 완료')
+               resolve() // 성공적으로 삭제됨
+            })
+         } catch (error) {
+            console.error('세션 및 쿠키 삭제 처리 중 예외 발생:', error)
+            reject(error)
+         }
+      })
    }
 
    async fetchAccessToken(refreshToken) {
