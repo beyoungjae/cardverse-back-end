@@ -4,6 +4,7 @@ const User = require('../models/userModels/user')
 const OauthAccount = require('../models/userModels/oauthAccount')
 const LoginHistory = require('../models/userModels/loginHistory')
 const AppError = require('../utils/AppError')
+const axios = require('axios')
 
 // 유틸
 const { snakeToCamel } = require('../utils/caseConverter')
@@ -52,7 +53,7 @@ class OAuthService {
 
    // 3. oauth 유저 생성로직
    // 3-1. oauthAccount 정보가 없다면 가상 메일 생성
-   async generateVirtualEmail(provider, providerUserId) {
+   generateVirtualEmail(provider, providerUserId) {
       return `${provider}${providerUserId}@temp.com`
    }
 
@@ -141,6 +142,27 @@ class OAuthService {
       } catch (error) {
          logger.error('kakao 사용자 정보 업데이트중 오류가 발생했습니다.', error) // 자동으로 error.stack 포함
          throw new Error(`kakao 사용자 정보 업데이트중 오류가 발생했습니다. ${error.message}`)
+      }
+   }
+
+   async fetchAccessToken(refreshToken) {
+      logger.info('리프레시토큰 패치 체크:', refreshToken)
+      try {
+         const response = await axios.post('https://kauth.kakao.com/oauth/token', null, {
+            params: {
+               grant_type: 'refresh_token',
+               client_id: process.env.KAKAO_CLIENT_ID,
+               refresh_token: refreshToken,
+            },
+            headers: {
+               'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+            },
+         })
+
+         return snakeToCamel(response.data)
+      } catch (error) {
+         console.error('accessToken 재발급 실패', error)
+         throw new AppError('accessToken 재발급 오류가 발생했습니다.', 400)
       }
    }
 }

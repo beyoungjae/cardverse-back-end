@@ -8,6 +8,7 @@
  * @param {string} providerUserId - 제공자에서의 사용자 ID
  * @returns {Object} 생성된 응답 데이터
  */
+
 exports.responseOAuthData = (user, exUser, provider, providerUserId) => {
    return {
       status: 'success',
@@ -23,7 +24,6 @@ exports.responseOAuthData = (user, exUser, provider, providerUserId) => {
       },
       token: {
          accessToken: exUser.accessToken,
-        //  refreshToken: exUser.refreshToken,
          tokenExpiresAt: exUser.tokenExpiresAt,
       },
       createdAt: exUser.createdAt,

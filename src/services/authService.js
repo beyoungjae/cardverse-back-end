@@ -9,14 +9,14 @@ const { sequelize } = require('../models')
 class AuthService {
    constructor() {}
 
-   async recordLoginHistory(provider, req, userData, getToken) {
+   async recordLoginHistory(provider, req, userData) {
       const transaction = await sequelize.transaction()
       const userId = userData.user.id
       const loginData = cleanLoginData(req, provider)
 
       try {
          const loginHistory = await LoginHistory.create(
-            {
+            {                                                                                                                                
                userId: userId,
                loginType: provider,
                ipAddress: loginData.ipAddress,
