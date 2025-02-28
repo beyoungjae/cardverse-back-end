@@ -14,7 +14,7 @@ function expressLoader(app) {
       cors({
          origin: process.env.FRONTEND_URL || 'http://localhost:3000',
          credentials: true,
-      }),
+      })
    )
 
    // 기본 미들웨어
@@ -35,12 +35,11 @@ function expressLoader(app) {
          cookie: {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 1000 * 60 * 60 * 24 * 7,
-            sameSite: 'strict', // 쿠키 보안 설정 CSRF 공격 방지 : CSRF는 웹 사이트 취약점 중 하나로, 사용자가 자신의 의지와 무관하게 공격자가 의도한 행위를 수행하게 하는 것을 의미
+            maxAge: 1000 * 60 * 60 * 24 * 7, // 7일
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 프로덕션 환경에서는 쿠키를 보호하기 위해 'none'으로 설정, 개발 환경에서는 'lax'로 설정
          },
-         name: 'cardverse.sid',
-         rolling: true, // 세션 만료 시간 갱신
-      }),
+         name: 'cardverse.sid', // 세션 이름
+      })
    )
 
    // CORS Preflight
@@ -48,8 +47,8 @@ function expressLoader(app) {
 
    // 공통 미들웨어로 logger와 AppError 추가
    app.use((req, res, next) => {
-      req.logger = logger // 요청 객체에 logger 추가
-      req.AppError = AppError // 요청 객체에 AppError 추가
+      req.logger = logger
+      req.AppError = AppError
       next()
    })
 }

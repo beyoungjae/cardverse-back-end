@@ -1,24 +1,12 @@
-const Payment = require('../models/userModels/payment')
-const Template = require('../models/postModels/template')
-const User = require('../models/userModels/user')
+const { Payment, UserTemplate, Template } = require('../models')
 const Coupon = require('../models/userModels/userCoupon')
-const UserTemplate = require('../models/userModels/userTemplate')
 
 exports.processPurchase = async (req, res) => {
    try {
       const { templateId, paymentInfo, totalAmount } = req.body
-      const userId = req.user.id // isLoggedIn 미들웨어를 통해 인증된 사용자의 ID
+      const userId = req.user.id
 
-      // 1. 템플릿 존재 확인
-      const template = await Template.findByPk(templateId)
-      if (!template) {
-         return res.status(404).json({
-            success: false,
-            message: '템플릿을 찾을 수 없습니다.',
-         })
-      }
-
-      // 2. UserTemplate 생성
+      // UserTemplate 생성
       const userTemplate = await UserTemplate.create({
          user_id: userId,
          template_id: templateId,
@@ -26,29 +14,69 @@ exports.processPurchase = async (req, res) => {
          status: 'published',
       })
 
-      // 3. 결제 정보 저장
+      // Payment 생성
       const payment = await Payment.create({
          user_id: userId,
-         user_template_id: userTemplate.id, // UserTemplate의 ID를 참조
+         user_template_id: userTemplate.id,
          amount: totalAmount,
          method: paymentInfo.method,
          status: 'completed',
       })
 
-      res.status(200).json({
+      return res.status(200).json({
          success: true,
          data: {
-            userTemplateId: userTemplate.id,
-            paymentId: payment.id,
+            payment,
+            userTemplate,
          },
-         message: '결제가 성공적으로 처리되었습니다.',
       })
    } catch (error) {
-      console.error('결제 처리 중 오류:', error)
-      res.status(500).json({
+      console.error('결제 처리 오류:', error)
+      return res.status(500).json({
          success: false,
          message: '결제 처리 중 오류가 발생했습니다.',
-         error: error.message,
+      })
+   }
+}
+
+exports.getPurchaseHistory = async (req, res) => {
+   try {
+      const userId = req.user.id
+
+      // 사용자의 결제 내역 조회
+      const purchases = await Payment.findAll({
+         where: { user_id: userId },
+         include: [
+            {
+               model: UserTemplate,
+               include: [
+                  {
+                     model: Template,
+                     attributes: ['id', 'title', 'thumbnail', 'category'],
+                  },
+               ],
+            },
+         ],
+         order: [['createdAt', 'DESC']],
+      })
+
+      // 응답 데이터 가공
+      const formattedPurchases = purchases.map((purchase) => ({
+         id: purchase.id,
+         amount: purchase.amount,
+         method: purchase.method,
+         status: purchase.status,
+         createdAt: purchase.createdAt,
+         userTemplateId: purchase.UserTemplate?.id,
+         template: purchase.UserTemplate?.Template,
+      }))
+
+      return res.status(200).json(formattedPurchases)
+   } catch (error) {
+      console.error('구매 내역 조회 오류:', error)
+      return res.status(500).json({
+         success: false,
+         message: '구매 내역 조회 중 오류가 발생했습니다.',
       })
    }
 }
