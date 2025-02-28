@@ -2,56 +2,53 @@ const Payment = require('../models/userModels/payment')
 const Template = require('../models/postModels/template')
 const User = require('../models/userModels/user')
 const Coupon = require('../models/userModels/userCoupon')
+const UserTemplate = require('../models/userModels/userTemplate')
 
 exports.processPurchase = async (req, res) => {
    try {
-      const { userId, templateId, paymentInfo, couponCode, totalAmount } = req.body
+      const { templateId, paymentInfo, totalAmount } = req.body
+      const userId = req.user.id // isLoggedIn 미들웨어를 통해 인증된 사용자의 ID
 
-      // 1. 사용자 확인
-      const user = await User.findByPk(userId)
-      if (!user) {
-         return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' })
-      }
-
-      // 2. 템플릿 확인
+      // 1. 템플릿 존재 확인
       const template = await Template.findByPk(templateId)
       if (!template) {
-         return res.status(404).json({ success: false, message: '템플릿을 찾을 수 없습니다.' })
+         return res.status(404).json({
+            success: false,
+            message: '템플릿을 찾을 수 없습니다.',
+         })
       }
 
-      // 3. 쿠폰 적용 (있는 경우)
-      let finalAmount = totalAmount
-      if (couponCode) {
-         const coupon = await Coupon.findOne({ where: { code: couponCode, isValid: true } })
-         if (coupon) {
-            finalAmount = totalAmount - totalAmount * coupon.discountRate
-            await coupon.update({ isValid: false }) // 쿠폰 사용 처리
-         }
-      }
-
-      // 4. 결제 정보 저장
-      const payment = await Payment.create({
-         userId,
-         templateId,
-         amount: finalAmount,
-         paymentMethod: paymentInfo.method,
-         status: 'completed',
-         purchaseDate: new Date(),
+      // 2. UserTemplate 생성
+      const userTemplate = await UserTemplate.create({
+         user_id: userId,
+         template_id: templateId,
+         isPaid: true,
+         status: 'published',
       })
 
-      // 5. 사용자-템플릿 연결 (구매 후 템플릿 접근 권한 부여)
-      await user.addTemplate(template)
+      // 3. 결제 정보 저장
+      const payment = await Payment.create({
+         user_id: userId,
+         user_template_id: userTemplate.id, // UserTemplate의 ID를 참조
+         amount: totalAmount,
+         method: paymentInfo.method,
+         status: 'completed',
+      })
 
       res.status(200).json({
          success: true,
-         paymentId: payment.id,
+         data: {
+            userTemplateId: userTemplate.id,
+            paymentId: payment.id,
+         },
          message: '결제가 성공적으로 처리되었습니다.',
       })
    } catch (error) {
-      console.error('Payment processing error:', error)
+      console.error('결제 처리 중 오류:', error)
       res.status(500).json({
          success: false,
          message: '결제 처리 중 오류가 발생했습니다.',
+         error: error.message,
       })
    }
 }
