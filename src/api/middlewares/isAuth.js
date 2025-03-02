@@ -1,3 +1,10 @@
+exports.checkProvider = (req, res, next) => {
+   if (!req.session.provider) {
+      return res.statue(401).json({ success: false, message: '인증 정보가 유효하지 않습니다.' })
+   }
+   next()
+}
+
 exports.isLoggedIn = (req, res, next) => {
    if (req.isAuthenticated()) {
       next()

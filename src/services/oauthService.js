@@ -38,7 +38,7 @@ class OAuthService {
                   model: User, // User 모델을 포함시킴
                },
             ],
-         })
+         }) 
          // 여기까지 check OK
          const user = exUser.User
 
@@ -118,7 +118,7 @@ class OAuthService {
             },
             {
                where: { user_id: userId, provider }, // 조건
-            },
+            }
          )
 
          if (updateToken[0] === 1) {
@@ -156,7 +156,7 @@ class OAuthService {
             },
             {
                where: { user_id: userId, provider }, // 조건
-            },
+            }
          )
 
          console.log('logout Checking:', logout)

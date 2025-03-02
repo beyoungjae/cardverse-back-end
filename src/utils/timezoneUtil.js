@@ -17,3 +17,9 @@ exports.formatDate = (seconds = 0) => {
 
    return now // 형식화된 Date 객체 반환
 }
+
+exports.fetchKST = (date) => {
+   const kstDate = new Date(date)
+   kstDate.setHours(kstDate.getHours() + 9)
+   return kstDate.toISOString().slice(0, 19).replace('T', ' ')
+}

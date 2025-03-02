@@ -6,8 +6,9 @@ const LoginHistory = require('../models/userModels/loginHistory')
 const { cleanLoginData } = require('../utils/requestUtils')
 const { sequelize } = require('../models')
 const passport = require('passport')
-const { formatDate } = require('../utils/timezoneUtil')
+const { formatDate, fetchKST } = require('../utils/timezoneUtil')
 const { Op } = require('sequelize')
+const bcrypt = require('bcrypt')
 
 class AuthService {
    constructor() {}
@@ -18,12 +19,12 @@ class AuthService {
             if (authError) return reject(authError)
             if (!user) return reject({ status: 401, message: info?.message || '이메일 또는 비밀번호가 일치하지 않습니다.' })
 
-            resolve(user) // 로그인 성공 시 유저 데이터 반환
+            resolve(user.toJSON()) // 로그인 성공 시 유저 데이터 반환
          })({ body: { email, password } })
       })
    }
 
-   async getUserData(email, nick) {
+   async exUser(email, nick) {
       try {
          const existingUser = await User.findOne({
             where: {
@@ -31,10 +32,56 @@ class AuthService {
             },
          })
 
-         return existingUser
+         // ✅ 이메일 또는 닉네임이 존재하면 409 에러 발생
+         if (existingUser) {
+            throw new Error('이미 사용 중인 이메일 또는 닉네임입니다.')
+         }
+
+         return null // 존재하지 않으면 null 반환
       } catch (error) {
          console.error('회원 조회중 오류가 발생하였습니다.', error)
-         throw new Error('회원 조회중 오류가 발생하였습니다.')
+         throw new Error(error.message || '회원 조회 중 오류가 발생하였습니다.')
+      }
+   }
+
+   async createUser(data) {
+      try {
+         const { email, password, nick, signupType, referralEmail } = data
+         const hash = await bcrypt.hash(password, 12)
+
+         const newUser = await User.create({
+            email,
+            password: hash,
+            nick,
+         })
+
+         if (signupType === 'referral') {
+            if (!referralEmail) {
+               throw new Error('추천인 이메일이 필요합니다.')
+            }
+
+            const referralUser = await User.findOne({ where: { email: referralEmail } })
+
+            if (!referralUser) {
+               throw new Error('존재하지 않는 추천인입니다.')
+            }
+
+            // TODO: 추천인 관련 쿠폰 발급 등 추가 로직 구현 예정
+         }
+
+         const safeUser = newUser.toJSON()
+         delete safeUser.password
+
+         const responseData = {
+            success: 'true',
+            message: '회원가입에 성공했습니다.',
+            user: safeUser,
+         }
+
+         return responseData
+      } catch (error) {
+         console.error('회원가입 중 오류가 발생했습니다.', error)
+         throw new Error(error.message || '회원 조회 중 오류가 발생하였습니다.')
       }
    }
 
@@ -43,6 +90,7 @@ class AuthService {
       const userId = userData?.id || userData?.user?.id
       // const userId = userData.user.id
       const loginData = cleanLoginData(req, provider)
+      const newLastLogin = new Date()
 
       try {
          const loginHistory = await LoginHistory.create(
@@ -52,16 +100,19 @@ class AuthService {
                ipAddress: loginData.ipAddress,
                userAgent: loginData.userAgent,
             },
-            { transaction },
+            { transaction }
          )
 
          await User.update(
-            { lastLogin: formatDate() }, // 생성된 loginAt 값을 사용
-            { where: { id: userId }, transaction },
+            { lastLogin: newLastLogin }, // 생성된 loginAt 값을 사용
+            { where: { id: userId }, transaction }
          )
+
+         userData.lastLogin = fetchKST(newLastLogin)
 
          await transaction.commit()
          await loginHistory.reload()
+         return userData
       } catch (error) {
          logger.error('로그인 이력 기록중 오류가 발생했습니다.', error.message)
          throw new Error('로그인 이력 기록중 오류가 발생했습니다.')

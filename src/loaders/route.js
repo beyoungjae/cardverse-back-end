@@ -16,13 +16,13 @@ function routeLoader(app) {
       app.use((req, res, next) => {
          const error = new Error(`${req.method} ${req.url} 라우터가 없습니다.`)
          error.status = 404
-         logger.warn(`404 에러 발생: ${req.method} ${req.url}`)
+         console.warn(`404 에러 발생: ${req.method} ${req.url}`)
          next(error)
       })
 
       // 에러 핸들링
       app.use((err, req, res, next) => {
-         logger.error('에러 발생:', {
+         console.error('에러 발생:', {
             message: err.message,
             stack: err.stack,
             path: `${req.method} ${req.url}`,
@@ -34,7 +34,7 @@ function routeLoader(app) {
          })
       })
    } catch (error) {
-      logger.error('라우트 로더 초기화 중 에러:', error)
+      console.error('라우트 로더 초기화 중 에러:', error)
       throw error
    }
 }
