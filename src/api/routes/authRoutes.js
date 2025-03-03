@@ -70,4 +70,7 @@ router.get('/status', async (req, res, next) => {
    }
 })
 
+// 프로필 업데이트
+router.put('/profile', isLoggedIn, authController.updateProfile)
+
 module.exports = router

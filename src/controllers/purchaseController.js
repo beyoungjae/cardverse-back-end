@@ -81,6 +81,33 @@ exports.getPurchaseHistory = async (req, res) => {
    }
 }
 
+// 특정 템플릿 구매 여부 확인
+exports.checkTemplatePurchased = async (req, res) => {
+   try {
+      const userId = req.user.id
+      const templateId = req.params.templateId
+
+      // 사용자가 해당 템플릿을 구매했는지 확인
+      const userTemplate = await UserTemplate.findOne({
+         where: {
+            user_id: userId,
+            template_id: templateId,
+            isPaid: true,
+         },
+      })
+
+      return res.status(200).json({
+         purchased: !!userTemplate,
+      })
+   } catch (error) {
+      console.error('템플릿 구매 여부 확인 오류:', error)
+      return res.status(500).json({
+         success: false,
+         message: '템플릿 구매 여부 확인 중 오류가 발생했습니다.',
+      })
+   }
+}
+
 exports.validateCoupon = async (req, res) => {
    try {
       const { couponCode } = req.body

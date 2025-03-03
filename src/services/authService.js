@@ -32,7 +32,7 @@ class AuthService {
             },
          })
 
-         // ✅ 이메일 또는 닉네임이 존재하면 409 에러 발생
+         // 이메일 또는 닉네임이 존재하면 409 에러 발생
          if (existingUser) {
             throw new Error('이미 사용 중인 이메일 또는 닉네임입니다.')
          }
@@ -135,11 +135,62 @@ class AuthService {
          throw error
       }
    }
+
+   /**
+    * 사용자 프로필 업데이트
+    * 
+    * @param {number} userId - 사용자 ID
+    * @param {Object} updateData - 업데이트할 데이터 객체
+    * @returns {Object} 업데이트된 사용자 정보
+    */
+   async updateUserProfile(userId, updateData) {
+      try {
+         // 닉네임 업데이트 시 중복 확인
+         if (updateData.nick) {
+            const existingUser = await User.findOne({
+               where: {
+                  nick: updateData.nick,
+                  id: { [Op.ne]: userId } // 자기 자신 제외
+               }
+            });
+
+            if (existingUser) {
+               throw new Error('이미 사용 중인 닉네임입니다.');
+            }
+         }
+
+         // 사용자 정보 업데이트
+         const [updated] = await User.update(updateData, {
+            where: { id: userId },
+            returning: true
+         });
+
+         if (updated === 0) {
+            throw new Error('사용자를 찾을 수 없습니다.');
+         }
+
+         // 업데이트된 사용자 정보 조회
+         const user = await User.findByPk(userId);
+         
+         if (!user) {
+            throw new Error('사용자를 찾을 수 없습니다.');
+         }
+
+         // 안전한 사용자 정보 반환 (비밀번호 제외)
+         const safeUser = user.toJSON();
+         delete safeUser.password;
+         
+         return safeUser;
+      } catch (error) {
+         console.error('프로필 업데이트 중 오류가 발생했습니다.', error);
+         throw error;
+      }
+   }
 }
 
 const authServiceInstance = new AuthService()
 
 module.exports = {
-   authService: authServiceInstance, // ✅ 싱글톤
-   AuthService, // ✅ 개별 인스턴스 생성 가능
+   authService: authServiceInstance, // 싱글톤
+   AuthService, // 개별 인스턴스 생성 가능
 }

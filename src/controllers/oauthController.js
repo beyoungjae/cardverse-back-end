@@ -30,7 +30,7 @@ const axios = require('axios')
  * @throws {Error} - 로그인 처리 중 발생한 에러
  */
 
-exports.kakaoLogin = async (req, res) => {
+exports.kakaoLogin = async (req, res, next) => {
    try {
       const { code } = req.body
       const provider = 'kakao'
@@ -72,7 +72,15 @@ exports.kakaoLogin = async (req, res) => {
       return res.status(200).json(userData)
    } catch (error) {
       logger.error('로그인 처리 중 오류 발생:', error)
-      next(error) // 에러 처리 미들웨어로 전달
+      if (next) {
+         next(error) // 에러 처리 미들웨어로 전달
+      } else {
+         return res.status(500).json({
+            success: false,
+            message: '로그인 처리 중 오류가 발생했습니다.',
+            error: error.message
+         });
+      }
    }
 }
 
