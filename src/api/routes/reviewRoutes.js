@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const Review = require('../models/postModels/review')
 const Template = require('../models/postModels/template')
-const { createReview, getReviews, updateReview, deleteReview } = require('../controllers/reviewController')
+const { createReview, getReviews, updateReview, deleteReview } = require('../../controllers/reviewController')
 
 // 리뷰 작성
 router.post('/', createReview)

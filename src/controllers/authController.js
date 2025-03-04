@@ -35,6 +35,7 @@ exports.login = async (req, res, next) => {
       const user = await authService.login(req, res, next)
 
       req.session.provider = provider
+      req.session.userId = user.id
 
       const updateUserLoginHistory = await authService.recordLoginHistory(req, provider, user)
 
@@ -49,6 +50,9 @@ exports.login = async (req, res, next) => {
 
 exports.logout = async (req, res, next) => {
    req.session.provider = 'guest'
+   // userId 세션 삭제
+   req.session.userId = null
+   
    req.logout((error) => {
       if (error) {
          console.error(error)
@@ -68,18 +72,28 @@ exports.logout = async (req, res, next) => {
 }
 
 exports.status = async (req, res, next) => {
-   const provider = req.session.provider
-   if (req.isAuthenticated()) {
-      res.json({
-         isAuthenticated: true,
-         user: {
-            id: req.user.id,
-            email: req.user.email,
-            nick: req.user.nick,
-            role: req.user.role,
-            provider,
-         },
-      })
+   const provider = req.session.provider || 'guest'
+
+   // Passport 인증 또는 세션 userId가 있으면 인증된 것으로 간주
+   if (req.isAuthenticated() || req.session.userId) {
+     // req.user가 있으면 그것을 사용, 없으면 세션 userId로 사용자 조회
+     let userData = req.user;
+      
+     // 세션 데이터 일관성 유지
+     if (!req.session.userId && req.user) {
+        req.session.userId = req.user.id;
+     }
+
+     res.json({
+      isAuthenticated: true,
+      user: {
+         id: userData ? userData.id : req.session.userId,
+         email: userData ? userData.email : null,
+         nick: userData ? userData.nick : null,
+         role: userData ? userData.role : null,
+         provider,
+      },
+   })
    } else {
       res.json({
          isAuthenticated: false,
@@ -90,20 +104,35 @@ exports.status = async (req, res, next) => {
 exports.updateProfile = async (req, res, next) => {
    try {
       const { nick } = req.body
-      const { success, message } = authService.validNick(nick)
 
-      if (!success) {
-         return res.status(400).json({
-            success,
-            message,
-         })
+      // 닉네임 유효성 검사
+      if (nick) {
+         const { success, message } = await authService.validNick(nick)
+
+         if (!success) {
+            return res.status(400).json({
+               success,
+               message,
+            })
+         }
       }
 
-      const userId = req.session.userId
+      // userId 확인 - req.user.id를 우선 사용하고, 없으면 req.session.userId 사용
+      const userId = req.user ? req.user.id : req.session.userId
+      
+      // userId가 없는 경우 에러 처리
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: '로그인이 필요합니다.',
+        });
+      }
 
       const updatedUser = await authService.updateUserProfile(userId, { nick })
-      console.userId.id
-      console.ression.privder
+      
+      // 디버깅을 위한 올바른 로그 (필요한 경우)
+      // console.log('userId:', userId);
+      // console.log('provider:', req.session.provider);
 
       return res.status(200).json({
          success: true,

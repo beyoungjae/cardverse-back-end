@@ -26,6 +26,10 @@ exports.providerHandler = (action) => {
 }
 
 exports.isLoggedIn = (req, res, next) => {
+   if (req.session.userId) {
+      return next()
+   }
+
    if (req.session.provider === 'local') {
       if (req.isAuthenticated()) {
          return next()

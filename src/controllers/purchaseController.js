@@ -4,7 +4,16 @@ const Coupon = require('../models/userModels/userCoupon')
 exports.processPurchase = async (req, res) => {
    try {
       const { templateId, paymentInfo, totalAmount } = req.body
-      const userId = req.session.id
+      // 세션 ID가 아닌 사용자 ID를 사용
+      const userId = req.user ? req.user.id : req.session.userId
+      
+      // 사용자 ID 확인
+      if (!userId) {
+         return res.status(401).json({
+            success: false,
+            message: '로그인이 필요합니다.',
+         })
+      }
 
       // UserTemplate 생성
       const userTemplate = await UserTemplate.create({
@@ -41,7 +50,16 @@ exports.processPurchase = async (req, res) => {
 
 exports.getPurchaseHistory = async (req, res) => {
    try {
-      const userId = req.session.id
+      // 세션 ID가 아닌 사용자 ID를 사용
+      const userId = req.user ? req.user.id : req.session.userId
+      
+      // 사용자 ID 확인
+      if (!userId) {
+         return res.status(401).json({
+            success: false,
+            message: '로그인이 필요합니다.',
+         })
+      }
 
       // 사용자의 결제 내역 조회
       const purchases = await Payment.findAll({
@@ -84,7 +102,17 @@ exports.getPurchaseHistory = async (req, res) => {
 // 특정 템플릿 구매 여부 확인
 exports.checkTemplatePurchased = async (req, res) => {
    try {
-      const userId = req.session.id
+      // 세션 ID가 아닌 사용자 ID를 사용
+      const userId = req.user ? req.user.id : req.session.userId
+      
+      // 사용자 ID 확인
+      if (!userId) {
+         return res.status(401).json({
+            success: false,
+            message: '로그인이 필요합니다.',
+         })
+      }
+      
       const templateId = req.params.templateId
 
       // 사용자가 해당 템플릿을 구매했는지 확인
