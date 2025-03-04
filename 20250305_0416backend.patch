@@ -1,0 +1,148 @@
+diff --git a/src/api/routes/authRoutes.js b/src/api/routes/authRoutes.js
+index 3975be8..34f2c0c 100644
+--- a/src/api/routes/authRoutes.js
++++ b/src/api/routes/authRoutes.js
+@@ -12,6 +12,6 @@ router.post('/status', checkProvider, providerHandler('status'))
+ 
+ router.get('/logout', checkProvider, isLoggedIn, providerHandler('logout'))
+ 
+-router.patch('/profile', checkProvider, isLoggedIn, authController.updateProfile)
++router.put('/profile', checkProvider, isLoggedIn, authController.updateProfile)
+ 
+ module.exports = router
+diff --git a/src/controllers/authController.js b/src/controllers/authController.js
+index 9ade711..a3cb7c2 100644
+--- a/src/controllers/authController.js
++++ b/src/controllers/authController.js
+@@ -89,7 +89,7 @@ exports.status = async (req, res, next) => {
+ 
+ exports.updateProfile = async (req, res, next) => {
+    try {
+-      const { nick } = req.body
++      const { nick, user: userData } = req.body
+       const { success, message } = authService.validNick(nick)
+ 
+       if (!success) {
+@@ -99,17 +99,11 @@ exports.updateProfile = async (req, res, next) => {
+          })
+       }
+ 
+-      const userId = req.session.userId
++      const userId = userData.id
+ 
+-      const updatedUser = await authService.updateUserProfile(userId, { nick })
+-      console.userId.id
+-      console.ression.privder
++      const responseData = await authService.updateUserProfile(userId, userData, { nick })
+ 
+-      return res.status(200).json({
+-         success: true,
+-         message: '프로필이 성공적으로 업데이트되었습니다.',
+-         user: updatedUser,
+-      })
++      return res.status(200).json(responseData)
+    } catch (error) {
+       console.error('프로필 업데이트 중 오류가 발생했습니다.', error)
+ 
+diff --git a/src/services/authService.js b/src/services/authService.js
+index 82a45fd..f070bf5 100644
+--- a/src/services/authService.js
++++ b/src/services/authService.js
+@@ -9,6 +9,7 @@ const passport = require('passport')
+ const { formatDate, fetchKST } = require('../utils/timezoneUtil')
+ const { Op } = require('sequelize')
+ const bcrypt = require('bcrypt')
++const { transformAuthResponse } = require('../utils/responseHelper')
+ 
+ class AuthService {
+    constructor() {}
+@@ -144,13 +145,10 @@ class AuthService {
+                ipAddress: loginData.ipAddress,
+                userAgent: loginData.userAgent,
+             },
+-            { transaction },
++            { transaction }
+          )
+ 
+-         await User.update(
+-            { lastLogin: newLastLogin }, 
+-            { where: { id: userId }, transaction },
+-         )
++         await User.update({ lastLogin: newLastLogin }, { where: { id: userId }, transaction })
+ 
+          userData.lastLogin = fetchKST(newLastLogin)
+ 
+@@ -167,10 +165,10 @@ class AuthService {
+       const userId = userData.user.id
+       try {
+          const loginHistory = await LoginHistory.findAll({
+-            attributes: ['id', 'loginType', 'ipAddress', 'userAgent', 'loginAt', 'userId'], 
++            attributes: ['id', 'loginType', 'ipAddress', 'userAgent', 'loginAt', 'userId'],
+             where: { userId: userId },
+-            order: [['loginAt', 'DESC']], 
+-            limit: 30, 
++            order: [['loginAt', 'DESC']],
++            limit: 30,
+          })
+ 
+          return loginHistory
+@@ -193,7 +191,7 @@ class AuthService {
+       return { success: true, message: '닉네임 데이터 검증 완료' }
+    }
+ 
+-   async updateUserProfile(userId, updateData) {
++   async updateUserProfile(userId, userData, updateData) {
+       try {
+          // 닉네임 업데이트 시 중복 확인
+          if (updateData.nick) {
+@@ -226,13 +224,24 @@ class AuthService {
+             throw new Error('사용자를 찾을 수 없습니다.')
+          }
+ 
+-         // 안전한 사용자 정보 반환 (비밀번호 제외)
+          const safeUser = user.toJSON()
+-         delete safeUser.password
++         const responseData = transformAuthResponse({ success: true, user: safeUser, token: userData, provider: userData.provider, message: '닉네임 변경이 완료되었습니다.' })
+ 
+-         return safeUser
++         return responseData
+       } catch (error) {
+-         console.error('프로필 업데이트 중 오류가 발생했습니다.', error)
++         console.error(
++            JSON.stringify(
++               {
++                  path: 'service',
++                  type: 'function',
++                  name: 'updateUserProfile(userId, updateData)',
++                  message: '프로필 업데이트 중 오류가 발생했습니다.',
++                  error: error.stack, // 에러 스택 포함
++               },
++               null,
++               4
++            )
++         )
+          throw error
+       }
+    }
+@@ -241,6 +250,6 @@ class AuthService {
+ const authServiceInstance = new AuthService()
+ 
+ module.exports = {
+-   authService: authServiceInstance, 
+-   AuthService, 
++   authService: authServiceInstance,
++   AuthService,
+ }
+diff --git a/src/utils/responseHelper.js b/src/utils/responseHelper.js
+index 5518114..1144846 100644
+--- a/src/utils/responseHelper.js
++++ b/src/utils/responseHelper.js
+@@ -18,7 +18,7 @@ exports.transformAuthResponse = ({ success = false, user = null, token = null, p
+          email: user.email,
+          nick: user.nick,
+          role: user.role,
+-         lastLogin: user.lastLogin,
++         // lastLogin: user.lastLogin,
+          provider: provider || 'local',
+       },
+ 

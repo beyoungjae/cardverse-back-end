@@ -89,7 +89,7 @@ exports.status = async (req, res, next) => {
 
 exports.updateProfile = async (req, res, next) => {
    try {
-      const { nick } = req.body
+      const { nick, user: userData } = req.body
       const { success, message } = authService.validNick(nick)
 
       if (!success) {
@@ -99,17 +99,11 @@ exports.updateProfile = async (req, res, next) => {
          })
       }
 
-      const userId = req.session.userId
+      const userId = userData.id
 
-      const updatedUser = await authService.updateUserProfile(userId, { nick })
-      console.userId.id
-      console.ression.privder
+      const responseData = await authService.updateUserProfile(userId, userData, { nick })
 
-      return res.status(200).json({
-         success: true,
-         message: '프로필이 성공적으로 업데이트되었습니다.',
-         user: updatedUser,
-      })
+      return res.status(200).json(responseData)
    } catch (error) {
       console.error('프로필 업데이트 중 오류가 발생했습니다.', error)
 

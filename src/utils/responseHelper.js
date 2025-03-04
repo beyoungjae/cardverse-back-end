@@ -18,7 +18,7 @@ exports.transformAuthResponse = ({ success = false, user = null, token = null, p
          email: user.email,
          nick: user.nick,
          role: user.role,
-         lastLogin: user.lastLogin,
+         // lastLogin: user.lastLogin,
          provider: provider || 'local',
       },
 

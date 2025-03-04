@@ -9,6 +9,7 @@ const passport = require('passport')
 const { formatDate, fetchKST } = require('../utils/timezoneUtil')
 const { Op } = require('sequelize')
 const bcrypt = require('bcrypt')
+const { transformAuthResponse } = require('../utils/responseHelper')
 
 class AuthService {
    constructor() {}
@@ -144,13 +145,10 @@ class AuthService {
                ipAddress: loginData.ipAddress,
                userAgent: loginData.userAgent,
             },
-            { transaction },
+            { transaction }
          )
 
-         await User.update(
-            { lastLogin: newLastLogin }, 
-            { where: { id: userId }, transaction },
-         )
+         await User.update({ lastLogin: newLastLogin }, { where: { id: userId }, transaction })
 
          userData.lastLogin = fetchKST(newLastLogin)
 
@@ -167,10 +165,10 @@ class AuthService {
       const userId = userData.user.id
       try {
          const loginHistory = await LoginHistory.findAll({
-            attributes: ['id', 'loginType', 'ipAddress', 'userAgent', 'loginAt', 'userId'], 
+            attributes: ['id', 'loginType', 'ipAddress', 'userAgent', 'loginAt', 'userId'],
             where: { userId: userId },
-            order: [['loginAt', 'DESC']], 
-            limit: 30, 
+            order: [['loginAt', 'DESC']],
+            limit: 30,
          })
 
          return loginHistory
@@ -193,7 +191,7 @@ class AuthService {
       return { success: true, message: '닉네임 데이터 검증 완료' }
    }
 
-   async updateUserProfile(userId, updateData) {
+   async updateUserProfile(userId, userData, updateData) {
       try {
          // 닉네임 업데이트 시 중복 확인
          if (updateData.nick) {
@@ -226,13 +224,24 @@ class AuthService {
             throw new Error('사용자를 찾을 수 없습니다.')
          }
 
-         // 안전한 사용자 정보 반환 (비밀번호 제외)
          const safeUser = user.toJSON()
-         delete safeUser.password
+         const responseData = transformAuthResponse({ success: true, user: safeUser, token: userData, provider: userData.provider, message: '닉네임 변경이 완료되었습니다.' })
 
-         return safeUser
+         return responseData
       } catch (error) {
-         console.error('프로필 업데이트 중 오류가 발생했습니다.', error)
+         console.error(
+            JSON.stringify(
+               {
+                  path: 'service',
+                  type: 'function',
+                  name: 'updateUserProfile(userId, updateData)',
+                  message: '프로필 업데이트 중 오류가 발생했습니다.',
+                  error: error.stack, // 에러 스택 포함
+               },
+               null,
+               4
+            )
+         )
          throw error
       }
    }
@@ -241,6 +250,6 @@ class AuthService {
 const authServiceInstance = new AuthService()
 
 module.exports = {
-   authService: authServiceInstance, 
-   AuthService, 
+   authService: authServiceInstance,
+   AuthService,
 }

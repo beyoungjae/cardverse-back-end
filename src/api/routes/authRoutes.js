@@ -12,6 +12,6 @@ router.post('/status', checkProvider, providerHandler('status'))
 
 router.get('/logout', checkProvider, isLoggedIn, providerHandler('logout'))
 
-router.patch('/profile', checkProvider, isLoggedIn, authController.updateProfile)
+router.put('/profile', checkProvider, isLoggedIn, authController.updateProfile)
 
 module.exports = router
