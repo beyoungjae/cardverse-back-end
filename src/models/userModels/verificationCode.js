@@ -11,7 +11,6 @@ module.exports = class VerificationCode extends Sequelize.Model {
             expiresAt: {
                type: Sequelize.DATE,
                allowNull: false,
-               // 값을 삽입할 때 JavaScript에서 계산
                defaultValue: () => {
                   const date = new Date()
                   date.setMinutes(date.getMinutes() + 3)

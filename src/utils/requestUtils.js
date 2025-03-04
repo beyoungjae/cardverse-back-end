@@ -5,7 +5,6 @@ exports.getClientIp = (req) => {
    if (ipAddress === '::1') {
       ipAddress = '127.0.0.1'
    } else if (ipAddress.includes('::ffff:')) {
-      ipAddress = ipAddress.split('::ffff:')[1] // IPv4-mapped IPv6 주소 변환
    }
 
    return ipAddress.split(',')[0].trim()

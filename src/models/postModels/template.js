@@ -46,10 +46,10 @@ module.exports = class Template extends Sequelize.Model {
             },
             status: {
                type: Sequelize.ENUM(
-                  'draft', // 작성중
-                  'published', // 판매중
-                  'ended', // 판매종료
-                  'deleted' // 삭제됨
+                  'draft', 
+                  'published', 
+                  'ended',
+                  'deleted'
                ),
             },
          },
@@ -67,7 +67,7 @@ module.exports = class Template extends Sequelize.Model {
    }
 
    static associate(models) {
-      this.belongsTo(models.User, { foreignKey: 'user_id' }) // 관리자 작성이니 CASCADE 설정x
+      this.belongsTo(models.User, { foreignKey: 'user_id' }) /
       this.hasMany(models.UserTemplate, { foreignKey: 'template_id' })
       this.hasMany(models.Image, { foreignKey: 'template_id' })
    }

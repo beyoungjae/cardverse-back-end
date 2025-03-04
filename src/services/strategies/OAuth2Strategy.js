@@ -11,7 +11,6 @@ class OAuth2Strategy {
          throw new Error('accessToken이 없습니다.')
       }
 
-      // OAuth2.0은 API를 호출하여 유저 정보를 가져옴
       const response = await axios.get(this.userInfoUrl, {
          headers: { Authorization: `Bearer ${token.accessToken}` },
       })

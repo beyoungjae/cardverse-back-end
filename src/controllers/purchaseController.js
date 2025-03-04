@@ -4,7 +4,7 @@ const Coupon = require('../models/userModels/userCoupon')
 exports.processPurchase = async (req, res) => {
    try {
       const { templateId, paymentInfo, totalAmount } = req.body
-      const userId = req.user.id
+      const userId = req.session.id
 
       // UserTemplate 생성
       const userTemplate = await UserTemplate.create({
@@ -41,7 +41,7 @@ exports.processPurchase = async (req, res) => {
 
 exports.getPurchaseHistory = async (req, res) => {
    try {
-      const userId = req.user.id
+      const userId = req.session.id
 
       // 사용자의 결제 내역 조회
       const purchases = await Payment.findAll({
@@ -84,7 +84,7 @@ exports.getPurchaseHistory = async (req, res) => {
 // 특정 템플릿 구매 여부 확인
 exports.checkTemplatePurchased = async (req, res) => {
    try {
-      const userId = req.user.id
+      const userId = req.session.id
       const templateId = req.params.templateId
 
       // 사용자가 해당 템플릿을 구매했는지 확인

@@ -5,7 +5,7 @@ module.exports = class DailyStatistic extends Sequelize.Model {
         return super.init(
             {
                 date: {
-                    type: Sequelize.DATEONLY, // 시간 데이터 제외
+                    type: Sequelize.DATEONLY, 
                     allowNull: false,
                     unique: {
                         name: 'idx_date',

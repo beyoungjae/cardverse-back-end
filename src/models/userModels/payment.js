@@ -43,7 +43,7 @@ module.exports = class Payment extends Sequelize.Model {
       })
       this.belongsTo(models.UserTemplate, {
          foreignKey: 'user_template_id',
-         onDelete: 'SET NULL', // UserTemplate이 삭제되어도 결제 기록은 유지
+         onDelete: 'SET NULL',
       })
    }
 }

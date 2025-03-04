@@ -13,14 +13,29 @@ const bcrypt = require('bcrypt')
 class AuthService {
    constructor() {}
 
-   async login(email, password) {
+   async login(req, res, next) {
       return new Promise((resolve, reject) => {
-         passport.authenticate('local', async (authError, user, info) => {
-            if (authError) return reject(authError)
-            if (!user) return reject({ status: 401, message: info?.message || '이메일 또는 비밀번호가 일치하지 않습니다.' })
-
-            resolve(user.toJSON()) // 로그인 성공 시 유저 데이터 반환
-         })({ body: { email, password } })
+         passport.authenticate('local', (authError, user, info) => {
+            if (authError) {
+               reject({ status: 500, message: '인증 중 오류 발생', error: authError })
+            } else if (!user) {
+               reject({ status: 401, message: info.message || '로그인 실패' })
+            } else {
+               req.login(user, (loginError) => {
+                  if (loginError) {
+                     reject({ status: 500, message: '로그인 중 오류 발생', error: loginError })
+                  } else {
+                     resolve({
+                        id: user.id,
+                        email: user.email,
+                        nick: user.nick,
+                        role: user.role,
+                        provider: 'local',
+                     })
+                  }
+               })
+            }
+         })(req, res, next)
       })
    }
 
@@ -32,7 +47,7 @@ class AuthService {
             },
          })
 
-         // 이메일 또는 닉네임이 존재하면 409 에러 발생
+         // ✅ 이메일 또는 닉네임이 존재하면 409 에러 발생
          if (existingUser) {
             throw new Error('이미 사용 중인 이메일 또는 닉네임입니다.')
          }
@@ -42,6 +57,37 @@ class AuthService {
          console.error('회원 조회중 오류가 발생하였습니다.', error)
          throw new Error(error.message || '회원 조회 중 오류가 발생하였습니다.')
       }
+   }
+   async validUser(id, provider, refreshToken) {
+      try {
+         logger.info('⏩ validUser 체크 실행:', `id:${id}, provider:${provider}, refreshToken:${refreshToken}`)
+
+         // ID를 기준으로 User 테이블 조회
+         const user = await User.findByPk(id, {
+            include: [
+               {
+                  model: OauthAccount,
+                  as: 'oauthAccount',
+                  where: provider ? { provider } : undefined,
+                  required: false,
+               },
+            ],
+         })
+
+         if (!user) {
+            console.warn(`⚠️ 유저 데이터 없음 (id=${id}, provider=${provider})`)
+            return false
+         }
+
+         // OauthAccount 테이블에서 provider & refreshToken 검증
+         const oauthAccount = user.oauthAccount
+         if (!oauthAccount || oauthAccount.refreshToken !== refreshToken) {
+            console.warn(`⚠️ 리프레시 토큰 불일치 (유저 ID: ${id}, provider: ${provider})`)
+            return false
+         }
+
+         return true
+      } catch (error) {}
    }
 
    async createUser(data) {
@@ -84,11 +130,9 @@ class AuthService {
          throw new Error(error.message || '회원 조회 중 오류가 발생하였습니다.')
       }
    }
-
    async recordLoginHistory(req, provider, userData) {
       const transaction = await sequelize.transaction()
       const userId = userData?.id || userData?.user?.id
-      // const userId = userData.user.id
       const loginData = cleanLoginData(req, provider)
       const newLastLogin = new Date()
 
@@ -100,12 +144,12 @@ class AuthService {
                ipAddress: loginData.ipAddress,
                userAgent: loginData.userAgent,
             },
-            { transaction }
+            { transaction },
          )
 
          await User.update(
-            { lastLogin: newLastLogin }, // 생성된 loginAt 값을 사용
-            { where: { id: userId }, transaction }
+            { lastLogin: newLastLogin }, 
+            { where: { id: userId }, transaction },
          )
 
          userData.lastLogin = fetchKST(newLastLogin)
@@ -114,7 +158,7 @@ class AuthService {
          await loginHistory.reload()
          return userData
       } catch (error) {
-         logger.error('로그인 이력 기록중 오류가 발생했습니다.', error.message)
+         console.error('로그인 이력 기록중 오류가 발생했습니다.', error.message)
          throw new Error('로그인 이력 기록중 오류가 발생했습니다.')
       }
    }
@@ -123,26 +167,32 @@ class AuthService {
       const userId = userData.user.id
       try {
          const loginHistory = await LoginHistory.findAll({
-            attributes: ['id', 'loginType', 'ipAddress', 'userAgent', 'loginAt', 'userId'], // 필요한 필드만 선택
+            attributes: ['id', 'loginType', 'ipAddress', 'userAgent', 'loginAt', 'userId'], 
             where: { userId: userId },
-            order: [['loginAt', 'DESC']], // 최신 로그인 기록
-            limit: 30, // 최대 30개 이력까지
+            order: [['loginAt', 'DESC']], 
+            limit: 30, 
          })
 
          return loginHistory
       } catch (error) {
-         logger.error('로그인 히스토리 조회 실패:', error.message)
+         console.error('로그인 히스토리 조회 실패:', error.message)
          throw error
       }
    }
 
-   /**
-    * 사용자 프로필 업데이트
-    * 
-    * @param {number} userId - 사용자 ID
-    * @param {Object} updateData - 업데이트할 데이터 객체
-    * @returns {Object} 업데이트된 사용자 정보
-    */
+   validNick(nick) {
+      if (!nick || nick.trim() === '') {
+         return { success: false, message: '닉네임은 필수 항목입니다.' }
+      }
+
+      // 닉네임 길이 체크
+      if (nick.length < 2 || nick.length > 20) {
+         return { success: false, message: '닉네임은 2자 이상 20자 이하여야 합니다.' }
+      }
+
+      return { success: true, message: '닉네임 데이터 검증 완료' }
+   }
+
    async updateUserProfile(userId, updateData) {
       try {
          // 닉네임 업데이트 시 중복 확인
@@ -150,40 +200,40 @@ class AuthService {
             const existingUser = await User.findOne({
                where: {
                   nick: updateData.nick,
-                  id: { [Op.ne]: userId } // 자기 자신 제외
-               }
-            });
+                  id: { [Op.ne]: userId }, // 자기 자신 제외
+               },
+            })
 
             if (existingUser) {
-               throw new Error('이미 사용 중인 닉네임입니다.');
+               throw new Error('이미 사용 중인 닉네임입니다.')
             }
          }
 
          // 사용자 정보 업데이트
          const [updated] = await User.update(updateData, {
             where: { id: userId },
-            returning: true
-         });
+            returning: true,
+         })
 
          if (updated === 0) {
-            throw new Error('사용자를 찾을 수 없습니다.');
+            throw new Error('사용자를 찾을 수 없습니다.')
          }
 
          // 업데이트된 사용자 정보 조회
-         const user = await User.findByPk(userId);
-         
+         const user = await User.findByPk(userId)
+
          if (!user) {
-            throw new Error('사용자를 찾을 수 없습니다.');
+            throw new Error('사용자를 찾을 수 없습니다.')
          }
 
          // 안전한 사용자 정보 반환 (비밀번호 제외)
-         const safeUser = user.toJSON();
-         delete safeUser.password;
-         
-         return safeUser;
+         const safeUser = user.toJSON()
+         delete safeUser.password
+
+         return safeUser
       } catch (error) {
-         console.error('프로필 업데이트 중 오류가 발생했습니다.', error);
-         throw error;
+         console.error('프로필 업데이트 중 오류가 발생했습니다.', error)
+         throw error
       }
    }
 }
@@ -191,6 +241,6 @@ class AuthService {
 const authServiceInstance = new AuthService()
 
 module.exports = {
-   authService: authServiceInstance, // 싱글톤
-   AuthService, // 개별 인스턴스 생성 가능
+   authService: authServiceInstance, 
+   AuthService, 
 }

@@ -36,10 +36,11 @@ router.get('/', async (req, res) => {
 // 템플릿 생성
 router.post('/', auth, async (req, res) => {
    try {
+      const userId = req.session.userId
       const { templateSet } = req.body
 
       const template = await Template.create({
-         userId: req.user.id,
+         userId,
          templateSet,
       })
 
@@ -70,6 +71,7 @@ router.get('/:templateId', async (req, res) => {
 // 템플릿 수정
 router.put('/:templateId', auth, async (req, res) => {
    try {
+      const userId = req.session.userId
       const { templateId } = req.params
       const { templateSet } = req.body
 
@@ -79,14 +81,14 @@ router.put('/:templateId', auth, async (req, res) => {
          // 새로운 템플릿 생성
          const newTemplate = await Template.create({
             id: templateId,
-            userId: req.user.id,
+            userId,
             templateSet,
          })
          return res.status(201).json(newTemplate)
       }
 
       // 기존 템플릿 수정
-      if (template.userId !== req.user.id) {
+      if (template.userId !== userId) {
          return res.status(403).json({ message: '템플릿을 수정할 권한이 없습니다.' })
       }
 
@@ -101,6 +103,7 @@ router.put('/:templateId', auth, async (req, res) => {
 // 템플릿 삭제
 router.delete('/:templateId', auth, async (req, res) => {
    try {
+      const userId = req.session.userId
       const { templateId } = req.params
       const template = await Template.findByPk(templateId)
 
@@ -108,7 +111,7 @@ router.delete('/:templateId', auth, async (req, res) => {
          return res.status(404).json({ message: '템플릿을 찾을 수 없습니다.' })
       }
 
-      if (template.userId !== req.user.id) {
+      if (template.userId !== userId) {
          return res.status(403).json({ message: '템플릿을 삭제할 권한이 없습니다.' })
       }
 

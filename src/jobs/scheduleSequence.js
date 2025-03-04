@@ -1,6 +1,3 @@
-// const { Template, Event, User, Stats } = require('../models')
-// const { Op } = require('sequelize')
-
 const ScheduleSequenceJob = {
    schedule: '0 1 * * *', // 매일 새벽 1시
 

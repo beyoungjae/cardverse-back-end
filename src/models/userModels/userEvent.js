@@ -48,6 +48,6 @@ module.exports = class UserEvent extends Sequelize.Model {
 
     static associate(models) {
         this.belongsTo(models.User, { foreignKey: 'user_id', onDelete: 'CASCADE' })
-        this.belongsTo(models.Event, { foreignKey: 'event_id' }) // 관리자가 이벤트를 종료해도 참여기록은 남아야함
+        this.belongsTo(models.Event, { foreignKey: 'event_id' }) 
     }
 }

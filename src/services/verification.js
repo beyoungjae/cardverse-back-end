@@ -9,7 +9,6 @@ const verificationService = {
       }
 
       const verificationCode = Math.random().toString().slice(2, 8)
-      // await saveVerificationCode(email, verificationCode)
 
       await mailService.sendVerificationMail(email, verificationCode)
 

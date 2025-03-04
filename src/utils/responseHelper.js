@@ -1,31 +1,44 @@
-// responseHelper.js
+exports.transformAuthResponse = ({ success = false, user = null, token = null, provider = 'guest', message = null }) => {
+   if (!success) {
+      return {
+         success,
+         message: message ?? '요청 처리에 실패하였습니다.',
+         user: null,
+         token: null,
+         isAuthenticated: false,
+      }
+   }
 
-/**
- * 응답 토큰 데이터를 생성하는 헬퍼 함수
- * @param {Object} user - 사용자 정보 객체
- * @param {Object} exUser - OauthAccount 정보 객체
- * @param {string} provider - OAuth 제공자
- * @param {string} providerUserId - 제공자에서의 사용자 ID
- * @returns {Object} 생성된 응답 데이터
- */
-exports.transformAuthResponse = (user, exUser = {}, provider, providerUserId = null, message = '요청에 대한 처리가 성공했습니다.') => {
    return {
-      success: true,
-      message,
+      success,
+      message: message ?? '요청 처리에 성공하였습니다.',
+      isAuthenticated: true,
       user: {
          id: user.id,
          email: user.email,
          nick: user.nick,
          role: user.role,
          lastLogin: user.lastLogin,
-         status: user.status,
          provider: provider || 'local',
-         providerUserId: providerUserId || null,
       },
-      token: {
-         accessToken: exUser?.accessToken || null,
-         tokenExpiresAt: exUser?.tokenExpiresAt || null,
+
+      authData: {
+         id: user.id,
+         email: user.email,
+         nick: user.nick,
+         role: user.role,
+         provider: provider || 'local',
+         accessToken: token?.accessToken || null,
       },
+   }
+}
+
+exports.notLoginResponse = () => {
+   return {
+      success: false,
+      message,
+      user: {},
+      token: {},
    }
 }
 

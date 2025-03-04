@@ -1,47 +1,59 @@
+const authController = require('../../controllers/authController')
+const oauthController = require('../../controllers/oauthController')
+
 exports.checkProvider = (req, res, next) => {
    if (!req.session.provider) {
-      return res.status(401).json({ success: false, message: '인증 정보가 유효하지 않습니다.' })
+      req.session.provider = 'guest'
    }
    next()
 }
 
+exports.providerHandler = (action) => {
+   return async (req, res, next) => {
+      try {
+         const provider = req.session.provider || 'guest'
+         const controller = ['local', 'guest'].includes(provider) ? authController : oauthController
+
+         if (controller[action]) {
+            return controller[action](req, res, next)
+         } else {
+            return res.status(400).json({ message: '해당 핸들러가 존재하지 않습니다.' })
+         }
+      } catch (error) {
+         next(error)
+      }
+   }
+}
+
 exports.isLoggedIn = (req, res, next) => {
-   if (req.isAuthenticated()) {
-      next()
-   } else {
-      res.status(401).json({
+   if (req.session.provider === 'local') {
+      if (req.isAuthenticated()) {
+         return next()
+      } else {
+         return res.status(401).json({
+            success: false,
+            message: '로그인이 필요합니다.',
+         })
+      }
+   }
+
+   if (req.session.provider === 'guest') {
+      return res.status(401).json({
          success: false,
          message: '로그인이 필요합니다.',
       })
    }
+   return next()
 }
 
 exports.isNotLoggedIn = (req, res, next) => {
    if (!req.isAuthenticated()) {
       next()
    } else {
-      // 클라이언트에서 명시적으로 세션 정리를 요청한 경우
-      const forceLogin = req.headers['x-force-login'] === 'true';
-      
-      if (forceLogin) {
-         // 기존 세션 정리
-         req.logout((error) => {
-            if (error) {
-               return res.status(500).json({
-                  success: false,
-                  message: '세션 정리 중 오류가 발생했습니다.',
-                  error: error.message,
-               });
-            }
-            // 세션 정리 후 다음 미들웨어로 진행
-            next();
-         });
-      } else {
-         res.status(403).json({
-            success: false,
-            message: '이미 로그인되어 있습니다.',
-         })
-      }
+      res.status(403).json({
+         success: false,
+         message: '이미 로그인되어 있습니다.',
+      })
    }
 }
 
