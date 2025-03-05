@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize')
 
-module.exports = class Post extends Sequelize.Model {
+module.exports = class Qna extends Sequelize.Model {
    static init(sequelize) {
       return super.init(
          {
@@ -12,15 +12,9 @@ module.exports = class Post extends Sequelize.Model {
                type: Sequelize.TEXT,
                allowNull: false,
             },
-            type: {
-               type: Sequelize.ENUM('notice', 'review', 'faq', 'qna'),
-               allowNull: false,
-               comment: '게시판 분류',
-            },
             category: {
-               type: Sequelize.ENUM('payment', 'template', 'account', 'technical', 'etc'),
+               type: Sequelize.ENUM('account', 'payment', 'event_coupon', 'site_usage', 'etc'),
                allowNull: true,
-               comment: '게시판 = faq / 일 경우 보이는 서브분류',
             },
             status: {
                type: Sequelize.ENUM(
@@ -32,12 +26,6 @@ module.exports = class Post extends Sequelize.Model {
                ),
                allowNull: false,
                defaultValue: 'draft',
-               comment: '게시글 상태',
-            },
-            viewCount: {
-               type: Sequelize.INTEGER,
-               allowNull: false,
-               defaultValue: 0,
             },
             createdAt: {
                type: Sequelize.DATE,
@@ -55,8 +43,8 @@ module.exports = class Post extends Sequelize.Model {
             sequelize,
             timestamps: false,
             underscored: true,
-            modelName: 'Post',
-            tableName: 'posts',
+            modelName: 'Qna',
+            tableName: 'qnas',
             paranoid: false,
             charset: 'utf8mb4',
             collate: 'utf8mb4_general_ci',
@@ -65,8 +53,6 @@ module.exports = class Post extends Sequelize.Model {
    }
 
    static associate(models) {
-      this.hasMany(models.Image)
-
       this.belongsTo(models.User, { foreignKey: 'user_id', onDelete: 'CASCADE' })
    }
 }

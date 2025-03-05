@@ -89,5 +89,6 @@ module.exports = class User extends Sequelize.Model {
       this.hasMany(models.LoginHistory, { foreignKey: 'user_id' })
       this.hasMany(models.Notification, { foreignKey: 'user_id' })
       this.hasMany(models.UserCoupon, { foreignKey: 'user_id' })
+      this.hasMany(models.Qna, {foreignKey:'user_id'})
    }
 }

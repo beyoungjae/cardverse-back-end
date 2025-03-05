@@ -87,7 +87,10 @@ class AuthService {
          }
 
          return true
-      } catch (error) {}
+      } catch (error) {
+         console.error(`유저 정보 조회 에러:`, error.message)
+         throw new Error('유저 정보 조히 중 오류가 발생했습니다.')
+      }
    }
 
    async createUser(data) {
@@ -147,10 +150,7 @@ class AuthService {
             { transaction },
          )
 
-         await User.update(
-            { lastLogin: newLastLogin }, 
-            { where: { id: userId }, transaction },
-         )
+         await User.update({ lastLogin: newLastLogin }, { where: { id: userId }, transaction })
 
          userData.lastLogin = fetchKST(newLastLogin)
 
@@ -167,10 +167,10 @@ class AuthService {
       const userId = userData.user.id
       try {
          const loginHistory = await LoginHistory.findAll({
-            attributes: ['id', 'loginType', 'ipAddress', 'userAgent', 'loginAt', 'userId'], 
+            attributes: ['id', 'loginType', 'ipAddress', 'userAgent', 'loginAt', 'userId'],
             where: { userId: userId },
-            order: [['loginAt', 'DESC']], 
-            limit: 30, 
+            order: [['loginAt', 'DESC']],
+            limit: 30,
          })
 
          return loginHistory
@@ -241,6 +241,6 @@ class AuthService {
 const authServiceInstance = new AuthService()
 
 module.exports = {
-   authService: authServiceInstance, 
-   AuthService, 
+   authService: authServiceInstance,
+   AuthService,
 }

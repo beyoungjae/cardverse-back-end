@@ -5,6 +5,7 @@ function routeLoader(app) {
    try {
       app.use('/templates', require('../routes/templateRoutes'))
       app.use('/reviews', require('../routes/reviewRoutes'))
+      app.use('/posts', require('../api/routes/postRouters'))
       app.use('/images', require('../routes/imageRoutes'))
       app.use('/auth', require('../api/routes/authRoutes'))
       app.use('/oauth', require('../api/routes/oauthRoutes'))

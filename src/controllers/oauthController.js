@@ -84,7 +84,6 @@ exports.status = async (req, res, next) => {
          const responseData = transformAuthResponse({ message: '재 로그인이 필요합니다.' })
          console.error('인증 정보가 유효하지 않습니다.')
          req.session.provider = 'guest'
-         delete req.session.oauthUser
 
          res.clearCookie('refreshToken', {
             httpOnly: true,
@@ -125,15 +124,14 @@ exports.logout = async (req, res, next) => {
       // 세션 데이터 초기화
       req.session.provider = 'guest'
       req.session.userId = null
-      delete req.session.oauthUser
 
       // 세션 완전히 파기
       req.session.destroy((err) => {
          if (err) {
             console.error('세션 파기 중 오류 발생:', err)
-            return res.status(500).json({ 
-               success: false, 
-               message: '로그아웃 중 오류가 발생했습니다.' 
+            return res.status(500).json({
+               success: false,
+               message: '로그아웃 중 오류가 발생했습니다.',
             })
          }
 
