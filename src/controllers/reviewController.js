@@ -1,9 +1,11 @@
 const Review = require('../models/postModels/review')
 const Template = require('../models/postModels/template')
+const User = require('../models/userModels/user')
 
 exports.createReview = async (req, res) => {
    try {
       const { templateId, rating, content, templateType } = req.body
+      const userId = req.session.userId
 
       // 템플릿 존재 확인
       const template = await Template.findByPk(templateId)
@@ -13,6 +15,7 @@ exports.createReview = async (req, res) => {
 
       const review = await Review.create({
          template_id: templateId,
+         user_id: userId,
          rating,
          content,
          templateType,
@@ -38,6 +41,10 @@ exports.getReviews = async (req, res) => {
             {
                model: Template,
                attributes: ['title', 'category'],
+            },
+            {
+               model: User,
+               attributes: ['id', 'nick', 'email'],
             },
          ],
          order: [['created_at', 'DESC']],
@@ -83,6 +90,35 @@ exports.deleteReview = async (req, res) => {
       await review.update({ status: 'deleted' })
 
       res.json({ message: '리뷰가 삭제되었습니다.' })
+   } catch (error) {
+      res.status(500).json({ message: error.message })
+   }
+}
+
+// 사용자가 작성한 리뷰 조회
+exports.getUserReviews = async (req, res) => {
+   try {
+      const userId = req.session.userId || req.user?.id
+
+      const reviews = await Review.findAll({
+         where: {
+            user_id: userId,
+            status: 'active',
+         },
+         include: [
+            {
+               model: Template,
+               attributes: ['id', 'title', 'category'],
+            },
+            {
+               model: User,
+               attributes: ['id', 'nick', 'email'],
+            },
+         ],
+         order: [['created_at', 'DESC']],
+      })
+
+      res.json(reviews)
    } catch (error) {
       res.status(500).json({ message: error.message })
    }

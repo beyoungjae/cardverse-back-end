@@ -4,6 +4,9 @@ const morgan = require('morgan')
 const cookieParser = require('cookie-parser')
 const session = require('express-session')
 const path = require('path')
+const logger = require('../config/logger')
+const AppError = require('../utils/AppError')
+require('dotenv').config()
 
 function expressLoader(app) {
    // CORS 설정
@@ -32,16 +35,22 @@ function expressLoader(app) {
          cookie: {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 1000 * 60 * 60 * 24 * 7,
-            sameSite: 'strict', // 쿠키 보안 설정 CSRF 공격 방지 : CSRF는 웹 사이트 취약점 중 하나로, 사용자가 자신의 의지와 무관하게 공격자가 의도한 행위를 수행하게 하는 것을 의미
+            maxAge: 1000 * 60 * 60 * 24 * 7, // 7일
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 프로덕션 환경에서는 쿠키를 보호하기 위해 'none'으로 설정, 개발 환경에서는 'lax'로 설정
          },
-         name: 'cardverse.sid',
-         rolling: true, // 세션 만료 시간 갱신
+         name: 'cardverse.sid', // 세션 이름
       })
    )
 
    // CORS Preflight
    app.options('*', cors())
+
+   // 공통 미들웨어로 logger와 AppError 추가
+   app.use((req, res, next) => {
+      req.logger = logger
+      req.AppError = AppError
+      next()
+   })
 }
 
 module.exports = expressLoader

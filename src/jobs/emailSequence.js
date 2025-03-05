@@ -71,7 +71,6 @@ const sendMail = async ({ to, subject, template, context }) => {
          subject,
          html,
       })
-      console.log(`✉️ Mail sent to ${to}`)
    } catch (error) {
       console.error('❌ Mail sending failed:', error)
       throw error

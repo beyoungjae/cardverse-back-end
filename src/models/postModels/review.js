@@ -4,6 +4,14 @@ module.exports = class Review extends Sequelize.Model {
    static init(sequelize) {
       return super.init(
          {
+            user_id: {
+               type: Sequelize.INTEGER,
+               allowNull: false,
+               references: {
+                  model: 'users',
+                  key: 'id'
+               }
+            },
             rating: {
                type: Sequelize.INTEGER,
                allowNull: false,
@@ -46,6 +54,10 @@ module.exports = class Review extends Sequelize.Model {
    static associate(models) {
       this.belongsTo(models.Template, {
          foreignKey: 'template_id',
+         onDelete: 'CASCADE',
+      })
+      this.belongsTo(models.User, {
+         foreignKey: 'user_id',
          onDelete: 'CASCADE',
       })
       this.belongsTo(models.UserTemplate, { foreignKey: 'user_template_id' })

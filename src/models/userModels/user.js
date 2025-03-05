@@ -7,7 +7,10 @@ module.exports = class User extends Sequelize.Model {
             email: {
                type: Sequelize.STRING(255),
                allowNull: false,
-               unique: true,
+               unique: {
+                  name: 'idx_email',
+                  msg: '이미 사용중인 이메일입니다.',
+               },
             },
 
             password: {
@@ -18,7 +21,11 @@ module.exports = class User extends Sequelize.Model {
             nick: {
                type: Sequelize.STRING(50),
                allowNull: false,
-               unique: true,
+               unique: 
+               {
+                  name: 'idx_nick',
+                  msg:'이미 사용중인 닉네임입니다.'
+               }
             },
 
             role: {
@@ -37,7 +44,7 @@ module.exports = class User extends Sequelize.Model {
                allowNull: false,
                defaultValue: 'active',
             },
-            
+
             createdAt: {
                type: Sequelize.DATE,
                allowNull: true,
@@ -64,7 +71,7 @@ module.exports = class User extends Sequelize.Model {
             paranoid: false,
             charset: 'utf8mb4',
             collate: 'utf8mb4_general_ci',
-         }
+         },
       )
    }
 
@@ -82,5 +89,6 @@ module.exports = class User extends Sequelize.Model {
       this.hasMany(models.LoginHistory, { foreignKey: 'user_id' })
       this.hasMany(models.Notification, { foreignKey: 'user_id' })
       this.hasMany(models.UserCoupon, { foreignKey: 'user_id' })
+      this.hasMany(models.Qna, {foreignKey:'user_id'})
    }
 }

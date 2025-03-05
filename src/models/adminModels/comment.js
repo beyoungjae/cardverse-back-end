@@ -41,7 +41,7 @@ module.exports = class Comment extends Sequelize.Model {
 
       this.belongsTo(models.Post, {
          foreignKey: 'post_id',
-         onDelete: 'CASCADE', // 게시글 삭제시 댓글도 삭제
+         onDelete: 'CASCADE',
       })
    }
 }

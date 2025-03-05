@@ -18,14 +18,17 @@ module.exports = class OauthAccount extends Sequelize.Model {
                     type: Sequelize.TEXT,
                     allowNull: true,
                 },
+
                 refreshToken: {
                     type: Sequelize.TEXT,
                     allowNull: true,
                 },
+
                 tokenExpiresAt: {
                     type: Sequelize.DATE,
                     allowNull: true,
                 },
+                
                 createdAt: {
                     type: Sequelize.DATE,
                     allowNull: false,

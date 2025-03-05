@@ -1,21 +1,62 @@
+const authController = require('../../controllers/authController')
+const oauthController = require('../../controllers/oauthController')
+
+exports.checkProvider = (req, res, next) => {
+   if (!req.session.provider) {
+      req.session.provider = 'guest'
+   }
+   next()
+}
+
+exports.providerHandler = (action) => {
+   return async (req, res, next) => {
+      try {
+         const provider = req.session.provider || 'guest'
+         const controller = ['local', 'guest'].includes(provider) ? authController : oauthController
+
+         if (controller[action]) {
+            return controller[action](req, res, next)
+         } else {
+            return res.status(400).json({ message: '해당 핸들러가 존재하지 않습니다.' })
+         }
+      } catch (error) {
+         next(error)
+      }
+   }
+}
+
 exports.isLoggedIn = (req, res, next) => {
-   if (req.isAuthenticated()) {
-      next()
-   } else {
-      req.status(403).json({
+   if (req.session.userId) {
+      return next()
+   }
+
+   if (req.session.provider === 'local') {
+      if (req.isAuthenticated()) {
+         return next()
+      } else {
+         return res.status(401).json({
+            success: false,
+            message: '로그인이 필요합니다.',
+         })
+      }
+   }
+
+   if (req.session.provider === 'guest') {
+      return res.status(401).json({
          success: false,
          message: '로그인이 필요합니다.',
       })
    }
+   return next()
 }
 
 exports.isNotLoggedIn = (req, res, next) => {
    if (!req.isAuthenticated()) {
       next()
    } else {
-      res.status(400).json({
+      res.status(403).json({
          success: false,
-         message: '이미 로그인이 된 상태입니다.',
+         message: '이미 로그인되어 있습니다.',
       })
    }
 }

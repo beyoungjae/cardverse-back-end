@@ -2,10 +2,13 @@ const express = require('express')
 const router = express.Router()
 const Review = require('../models/postModels/review')
 const Template = require('../models/postModels/template')
-const { createReview, getReviews, updateReview, deleteReview } = require('../controllers/reviewController')
+const { createReview, getReviews, updateReview, deleteReview, getUserReviews } = require('../controllers/reviewController')
 
 // 리뷰 작성
 router.post('/', createReview)
+
+// 사용자가 작성한 리뷰 조회
+router.get('/user', getUserReviews)
 
 // 리뷰 목록 조회 (템플릿별)
 router.get('/template/:templateId', async (req, res) => {
