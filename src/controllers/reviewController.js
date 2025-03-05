@@ -5,7 +5,7 @@ const User = require('../models/userModels/user')
 exports.createReview = async (req, res) => {
    try {
       const { templateId, rating, content, templateType } = req.body
-      const userId = req.user.id // 인증된 사용자 ID
+      const userId = Number(req.session.id) || req.user?.id // 인증된 사용자 ID
 
       // 템플릿 존재 확인
       const template = await Template.findByPk(templateId)
@@ -45,7 +45,7 @@ exports.getReviews = async (req, res) => {
             {
                model: User,
                attributes: ['id', 'nick', 'email'],
-            }
+            },
          ],
          order: [['created_at', 'DESC']],
       })
@@ -98,7 +98,12 @@ exports.deleteReview = async (req, res) => {
 // 사용자가 작성한 리뷰 조회
 exports.getUserReviews = async (req, res) => {
    try {
-      const userId = req.user.id // 인증된 사용자 ID
+      console.log('🔹 요청된 사용자 정보:', req.user) // 디버깅 로그 추가
+
+      if (!req.user || !req.user.id) {
+         return res.status(401).json({ message: '사용자 인증이 필요합니다.' })
+      }
+      const userId = req.user.id
 
       const reviews = await Review.findAll({
          where: {
@@ -113,7 +118,7 @@ exports.getUserReviews = async (req, res) => {
             {
                model: User,
                attributes: ['id', 'nick', 'email'],
-            }
+            },
          ],
          order: [['created_at', 'DESC']],
       })

@@ -84,9 +84,6 @@ exports.getTemplates = async (req, res) => {
          order: [['createdAt', 'DESC']],
       })
 
-      console.log('템플릿 조회 조건:', where)
-      console.log('조회된 템플릿 개수:', templates.length)
-
       res.json({ success: true, templates })
    } catch (error) {
       res.status(500).json({
