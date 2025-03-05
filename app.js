@@ -6,7 +6,6 @@ const app = express()
 
 async function startServer() {
    try {
-      // await require('./src/loaders')(app)
        await init(app)
 
       const PORT = process.env.PORT || 8000

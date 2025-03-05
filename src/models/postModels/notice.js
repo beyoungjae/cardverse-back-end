@@ -1,6 +1,6 @@
 const Sequelize = require('sequelize')
 
-module.exports = class Qna extends Sequelize.Model {
+module.exports = class Notice extends Sequelize.Model {
    static init(sequelize) {
       return super.init(
          {
@@ -13,21 +13,15 @@ module.exports = class Qna extends Sequelize.Model {
                allowNull: false,
             },
             category: {
-               type: Sequelize.ENUM('account', 'payment', 'event_coupon', 'site_usage', 'etc'),
+               type: Sequelize.ENUM('service', 'promotion', 'policy', 'security', 'emergency'),
                allowNull: true,
-            },
-            isPrivate: {
-               type: Sequelize.BOOLEAN,
-               allowNull: false,
-               defaultValue: false,
             },
             status: {
                type: Sequelize.ENUM(
                   'draft', // 작성중
                   'published', // 공개중
-                  'answering', // 답변중 (QnA인 경우)
-                  'completed', // 답변완료 (QnA인 경우)
                   'deleted', // 삭제됨
+                  'private', // 비공개
                ),
                allowNull: false,
                defaultValue: 'draft',
@@ -48,8 +42,8 @@ module.exports = class Qna extends Sequelize.Model {
             sequelize,
             timestamps: false,
             underscored: true,
-            modelName: 'Qna',
-            tableName: 'qnas',
+            modelName: 'Notice',
+            tableName: 'notices',
             paranoid: false,
             charset: 'utf8mb4',
             collate: 'utf8mb4_general_ci',

@@ -5,11 +5,11 @@ function routeLoader(app) {
    try {
       app.use('/templates', require('../routes/templateRoutes'))
       app.use('/reviews', require('../routes/reviewRoutes'))
-      app.use('/posts', require('../api/routes/postRouters'))
+      app.use('/post', require('../routes/postRouters'))
       app.use('/images', require('../routes/imageRoutes'))
-      app.use('/auth', require('../api/routes/authRoutes'))
-      app.use('/oauth', require('../api/routes/oauthRoutes'))
-      app.use('/user', require('../api/routes/userRoutes'))
+      app.use('/auth', require('../routes/authRoutes'))
+      app.use('/oauth', require('../routes/oauthRoutes'))
+      app.use('/user', require('../routes/userRoutes'))
       app.use('/user-templates', require('../routes/userTemplateRoutes'))
       app.use('/purchase', require('../routes/purchaseRoutes'))
 

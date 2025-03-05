@@ -131,8 +131,6 @@ exports.updateProfile = async (req, res, next) => {
       const updatedUser = await authService.updateUserProfile(userId, { nick })
       
       // 디버깅을 위한 올바른 로그 (필요한 경우)
-      // console.log('userId:', userId);
-      // console.log('provider:', req.session.provider);
 
       return res.status(200).json({
          success: true,

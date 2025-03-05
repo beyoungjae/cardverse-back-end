@@ -6,7 +6,6 @@ exports.createReview = async (req, res) => {
    try {
       const { templateId, rating, content, templateType } = req.body
       const userId = req.session.userId
-      // const userId = Number(req.session.id) || req.user?.id // 인증된 사용자 ID
 
       // 템플릿 존재 확인
       const template = await Template.findByPk(templateId)
