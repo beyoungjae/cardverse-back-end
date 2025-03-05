@@ -5,7 +5,10 @@ const User = require('../models/userModels/user')
 exports.createReview = async (req, res) => {
    try {
       const { templateId, rating, content, templateType } = req.body
-      const userId = Number(req.session.id) || req.user?.id // 인증된 사용자 ID
+      console.log('req.body:', req.body)
+      const userId = req.session.userId
+      console.log('req.session.userId:', userId)
+      // const userId = Number(req.session.id) || req.user?.id // 인증된 사용자 ID
 
       // 템플릿 존재 확인
       const template = await Template.findByPk(templateId)
