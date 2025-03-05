@@ -110,20 +110,37 @@ exports.logout = async (req, res, next) => {
       const userId = req.session.userId
       const provider = req.session.provider
 
-      await oauthService.clearToken(userId, provider)
+      // 사용자 정보가 있는 경우에만 토큰 정리
+      if (userId && provider) {
+         await oauthService.clearToken(userId, provider)
+      }
 
+      // 쿠키 제거
       res.clearCookie('refreshToken', {
          httpOnly: true,
          secure: process.env.NODE_ENV === 'production',
          sameSite: 'Strict',
       })
 
+      // 세션 데이터 초기화
       req.session.provider = 'guest'
+      req.session.userId = null
       delete req.session.oauthUser
 
-      return res.status(200).json({
-         success: false,
-         message: '성공적으로 로그아웃 되었습니다.',
+      // 세션 완전히 파기
+      req.session.destroy((err) => {
+         if (err) {
+            console.error('세션 파기 중 오류 발생:', err)
+            return res.status(500).json({ 
+               success: false, 
+               message: '로그아웃 중 오류가 발생했습니다.' 
+            })
+         }
+
+         return res.status(200).json({
+            success: true,
+            message: '성공적으로 로그아웃 되었습니다.',
+         })
       })
    } catch (error) {
       console.error('OAuth 로그아웃 에러:', error)
