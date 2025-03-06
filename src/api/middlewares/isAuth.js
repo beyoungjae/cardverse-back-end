@@ -29,36 +29,20 @@ exports.isLoggedIn = (req, res, next) => {
    if (req.session.userId) {
       return next()
    }
-
-   if (req.session.provider === 'local') {
-      if (req.isAuthenticated()) {
-         return next()
-      } else {
-         return res.status(401).json({
-            success: false,
-            message: '로그인이 필요합니다.',
-         })
-      }
-   }
-
-   if (req.session.provider === 'guest') {
-      return res.status(401).json({
-         success: false,
-         message: '로그인이 필요합니다.',
-      })
-   }
-   return next()
+   return res.status(401).json({
+      success: false,
+      message: '로그인이 필요합니다.',
+   })
 }
 
 exports.isNotLoggedIn = (req, res, next) => {
-   if (!req.isAuthenticated()) {
-      next()
-   } else {
-      res.status(403).json({
-         success: false,
-         message: '이미 로그인되어 있습니다.',
-      })
+   if (!req.session.userId) {
+      return next()
    }
+   return res.status(403).json({
+      success: false,
+      message: '이미 로그인되어 있습니다.',
+   })
 }
 
 exports.isAdmin = (req, res, next) => {

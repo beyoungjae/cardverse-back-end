@@ -6,7 +6,7 @@ const app = express()
 
 async function startServer() {
    try {
-       await init(app)
+      await init(app)
 
       const PORT = process.env.PORT || 8000
       app.listen(PORT, () => {
@@ -18,9 +18,6 @@ async function startServer() {
    }
 }
 
-// 개발 환경에서만 서버 시작
-if (process.env.NODE_ENV === 'development') {
-   startServer()
-}
+startServer()
 
 module.exports = app

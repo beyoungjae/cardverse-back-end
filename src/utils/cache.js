@@ -2,9 +2,15 @@ const cache = new Map()
 const CACHE_TTL = 1000 * 60 * 60
 
 // 로그인 정보 저장
-function setUser(userId, provider, accessToken) {
+function setUser(userId, provider, role, accessToken) {
+   console.group('셋유저시작')
+   console.log(userId)
+   console.log(provider)
+   console.log(role)
+   console.log(accessToken)
+   console.groupEnd('셋유저끝')
    const timestamp = Date.now()
-   cache.set(userId, { provider, accessToken, timestamp })
+   cache.set(userId, { provider, accessToken, role, timestamp })
 
    // 일정 시간이 지나면 자동 삭제
    setTimeout(() => {

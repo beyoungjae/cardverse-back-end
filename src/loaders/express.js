@@ -14,7 +14,7 @@ function expressLoader(app) {
       cors({
          origin: process.env.FRONTEND_URL || 'http://localhost:3000',
          credentials: true,
-      })
+      }),
    )
 
    // 기본 미들웨어
@@ -34,12 +34,12 @@ function expressLoader(app) {
          secret: process.env.COOKIE_SECRET,
          cookie: {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: false,
             maxAge: 1000 * 60 * 60 * 24 * 7, // 7일
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 프로덕션 환경에서는 쿠키를 보호하기 위해 'none'으로 설정, 개발 환경에서는 'lax'로 설정
+            sameSite: 'lax',
          },
          name: 'cardverse.sid', // 세션 이름
-      })
+      }),
    )
 
    // CORS Preflight

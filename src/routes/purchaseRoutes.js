@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { isLoggedIn } = require('../api/middlewares/isAuth')
+const { isLoggedIn } = require('../middlewares/isAuth')
 const { processPurchase, getPurchaseHistory, checkTemplatePurchased } = require('../controllers/purchaseController')
 
 // 결제 처리 라우트

@@ -1,0 +1,828 @@
+diff --git a/app.js b/app.js
+index eff6cf3..b6b9046 100644
+--- a/app.js
++++ b/app.js
+@@ -6,7 +6,7 @@ const app = express()
+ 
+ async function startServer() {
+    try {
+-       await init(app)
++      await init(app)
+ 
+       const PORT = process.env.PORT || 8000
+       app.listen(PORT, () => {
+@@ -18,9 +18,6 @@ async function startServer() {
+    }
+ }
+ 
+-// 개발 환경에서만 서버 시작
+-if (process.env.NODE_ENV === 'development') {
+-   startServer()
+-}
++startServer()
+ 
+ module.exports = app
+diff --git a/backup/20250225/index copy.js b/backup/20250225/index copy.js
+index 73fdd0c..a13d1e6 100644
+--- a/backup/20250225/index copy.js	
++++ b/backup/20250225/index copy.js	
+@@ -1,5 +1,6 @@
+ const Sequelize = require('sequelize')
+-const config = require('../config')[process.env.NODE_ENV || 'development']
++// const config = require('../config')[process.env.NODE_ENV || 'development']
++const config = require('../config')['production']
+ const db = {}
+ 
+ const sequelize = new Sequelize(config.database, config.username, config.password, config)
+diff --git a/package.json b/package.json
+index d3f07bc..f87e4ab 100644
+--- a/package.json
++++ b/package.json
+@@ -41,7 +41,8 @@
+       "passport-local": "^1.0.0",
+       "sequelize": "^6.37.5",
+       "sharp": "^0.33.5",
+-      "winston": "^3.17.0"
++      "winston": "^3.17.0",
++      "winston-daily-rotate-file": "^5.0.0"
+    },
+    "devDependencies": {
+       "nodemon": "^3.1.9",
+diff --git a/src/api/middlewares/isAuth.js b/src/api/middlewares/isAuth.js
+index 481ddcd..9d80d58 100644
+--- a/src/api/middlewares/isAuth.js
++++ b/src/api/middlewares/isAuth.js
+@@ -29,36 +29,20 @@ exports.isLoggedIn = (req, res, next) => {
+    if (req.session.userId) {
+       return next()
+    }
+-
+-   if (req.session.provider === 'local') {
+-      if (req.isAuthenticated()) {
+-         return next()
+-      } else {
+-         return res.status(401).json({
+-            success: false,
+-            message: '로그인이 필요합니다.',
+-         })
+-      }
+-   }
+-
+-   if (req.session.provider === 'guest') {
+-      return res.status(401).json({
+-         success: false,
+-         message: '로그인이 필요합니다.',
+-      })
+-   }
+-   return next()
++   return res.status(401).json({
++      success: false,
++      message: '로그인이 필요합니다.',
++   })
+ }
+ 
+ exports.isNotLoggedIn = (req, res, next) => {
+-   if (!req.isAuthenticated()) {
+-      next()
+-   } else {
+-      res.status(403).json({
+-         success: false,
+-         message: '이미 로그인되어 있습니다.',
+-      })
++   if (!req.session.userId) {
++      return next()
+    }
++   return res.status(403).json({
++      success: false,
++      message: '이미 로그인되어 있습니다.',
++   })
+ }
+ 
+ exports.isAdmin = (req, res, next) => {
+diff --git a/src/api/middlewares/isPost.js b/src/api/middlewares/isPost.js
+deleted file mode 100644
+index 027984f..0000000
+--- a/src/api/middlewares/isPost.js
++++ /dev/null
+@@ -1,4 +0,0 @@
+-exports.postType = (req, res, next) => {
+-    const { type, postData } = req.body
+-    
+-}
+diff --git a/src/api/middlewares/validators.js b/src/api/middlewares/validators.js
+deleted file mode 100644
+index 8d0d0ed..0000000
+--- a/src/api/middlewares/validators.js
++++ /dev/null
+@@ -1,53 +0,0 @@
+-const { check, validationResult } = require('express-validator')
+-
+-exports.validSignup = [
+-   check('email').isEmail().withMessage('올바른 이메일 형식을 입력하세요.'),
+-   check('password')
+-      .isLength({ min: 8 })
+-      .withMessage('비밀번호는 최소 8자 이상이어야 합니다.')
+-      .matches(/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/)
+-      .withMessage('비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.'),
+-   check('nick').notEmpty().withMessage('닉네임을 입력해야 합니다.'),
+-   (req, res, next) => {
+-      const errors = validationResult(req)
+-      if (!errors.isEmpty()) {
+-         return res.status(400).json({ success: false, errors: errors.array() })
+-      }
+-      check('signupType').notEmpty().withMessage('추천인이 비어있습니다.')
+-      next()
+-   },
+-]
+-
+-exports.validLogin = [
+-   check('email').isEmail().withMessage('올바른 이메일 형식을 입력하세요.'),
+-   check('password')
+-      .isLength({ min: 8 })
+-      .withMessage('비밀번호는 최소 8자 이상이어야 합니다.')
+-      .matches(/^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/)
+-      .withMessage('비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다.'),
+-   (req, res, next) => {
+-      const errors = validationResult(req)
+-      if (!errors.isEmpty()) {
+-         return res.status(400).json({ errors: errors.array() })
+-      }
+-      next()
+-   },
+-]
+-
+-exports.validPost = [
+-   check('type').notEmpty().withMessage('게시글 타입(type)은 필수입니다.').isIn(['qna', 'notice', 'review', 'faq']).withMessage('유효한 게시글 타입이 아닙니다.'),
+-
+-   check('postData.title').notEmpty().withMessage('제목(title)은 필수입니다.').isString().withMessage('제목(title)은 문자열이어야 합니다.'),
+-
+-   check('postData.content').notEmpty().withMessage('내용(content)은 필수입니다.').isString().withMessage('내용(content)은 문자열이어야 합니다.'),
+-
+-   check('postData.category').isIn(['account', 'payment', 'event_coupon', 'site_usage', 'etc']).withMessage('유효한 카테고리(category)가 아닙니다.'),
+-
+-   (req, res, next) => {
+-      const errors = validationResult(req)
+-      if (!errors.isEmpty()) {
+-         return res.status(400).json({ errors: errors.array() })
+-      }
+-      next()
+-   },
+-]
+diff --git a/src/api/routes/authRoutes.js b/src/api/routes/authRoutes.js
+deleted file mode 100644
+index 34f2c0c..0000000
+--- a/src/api/routes/authRoutes.js
++++ /dev/null
+@@ -1,17 +0,0 @@
+-const express = require('express')
+-const router = express.Router()
+-const { isLoggedIn, isNotLoggedIn, checkProvider, providerHandler } = require('../middlewares/isAuth')
+-const { validLogin, validSignup } = require('../middlewares/validators')
+-const authController = require('../../controllers/authController')
+-
+-router.post('/login', isNotLoggedIn, validLogin, authController.login)
+-
+-router.post('/signup', isNotLoggedIn, validSignup, authController.signup)
+-
+-router.post('/status', checkProvider, providerHandler('status'))
+-
+-router.get('/logout', checkProvider, isLoggedIn, providerHandler('logout'))
+-
+-router.put('/profile', checkProvider, isLoggedIn, authController.updateProfile)
+-
+-module.exports = router
+diff --git a/src/api/routes/imageRoutes.js b/src/api/routes/imageRoutes.js
+deleted file mode 100644
+index 88e7767..0000000
+--- a/src/api/routes/imageRoutes.js
++++ /dev/null
+@@ -1,34 +0,0 @@
+-const express = require('express')
+-const router = express.Router()
+-const multer = require('multer')
+-const imageController = require('../controllers/imageController')
+-
+-// multer 설정
+-const storage = multer.diskStorage({
+-   destination: (req, file, cb) => {
+-      cb(null, 'uploads/')
+-   },
+-   filename: (req, file, cb) => {
+-      cb(null, `${Date.now()}-${file.originalname}`)
+-   },
+-})
+-
+-const upload = multer({
+-   storage,
+-   limits: { fileSize: 20 * 1024 * 1024 }, // 20MB 제한
+-   fileFilter: (req, file, cb) => {
+-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+-      if (allowedTypes.includes(file.mimetype)) {
+-         cb(null, true)
+-      } else {
+-         cb(new Error('지원하지 않는 파일 형식입니다.'))
+-      }
+-   },
+-})
+-
+-// 라우트 설정
+-router.post('/upload', upload.array('images'), imageController.uploadImages)
+-router.delete('/:id', imageController.deleteImage)
+-router.put('/order', imageController.updateImageOrder)
+-
+-module.exports = router
+diff --git a/src/api/routes/oauthRoutes.js b/src/api/routes/oauthRoutes.js
+deleted file mode 100644
+index 78d99bb..0000000
+--- a/src/api/routes/oauthRoutes.js
++++ /dev/null
+@@ -1,10 +0,0 @@
+-const express = require('express')
+-const router = express.Router()
+-const oauthControllor = require('../../controllers/oauthController')
+-
+-const { checkProvider } = require('../middlewares/isAuth')
+-
+-// 카카오 로그인
+-router.post('/login', checkProvider, oauthControllor.oauthLogin)
+-
+-module.exports = router
+diff --git a/src/api/routes/postRouters.js b/src/api/routes/postRouters.js
+deleted file mode 100644
+index 3cd8064..0000000
+--- a/src/api/routes/postRouters.js
++++ /dev/null
+@@ -1,10 +0,0 @@
+-const express = require('express')
+-const router = express.Router()
+-const postController = require('../../controllers/postController')
+-const { isLoggedIn } = require('../middlewares/isAuth')
+-const { validPost } = require('../middlewares/validators')
+-
+-router.get('/', postController.getPosts)
+-router.post('/create', isLoggedIn, validPost, postController.createPost)
+-
+-module.exports = router
+diff --git a/src/api/routes/userRoutes.js b/src/api/routes/userRoutes.js
+deleted file mode 100644
+index 1fb27ac..0000000
+--- a/src/api/routes/userRoutes.js
++++ /dev/null
+@@ -1,5 +0,0 @@
+-const express = require('express')
+-const router = express.Router()
+-
+-
+-module.exports = router
+diff --git a/src/config/index.js b/src/config/index.js
+index b7ff67f..7594a4b 100644
+--- a/src/config/index.js
++++ b/src/config/index.js
+@@ -3,7 +3,7 @@ require('dotenv').config()
+ const config = {
+    development: {
+       username: process.env.DB_USER || 'root',
+-      password: process.env.DB_PASSWORD || '12345678',
++      password: process.env.DB_PASSWORD || '1234',
+       database: process.env.DB_NAME || 'cardverse',
+       host: process.env.DB_HOST || '127.0.0.1',
+       dialect: 'mysql',
+diff --git a/src/config/logger.js b/src/config/logger.js
+index 08f4b0b..7153377 100644
+--- a/src/config/logger.js
++++ b/src/config/logger.js
+@@ -1,26 +1,34 @@
+ const winston = require('winston')
++const DailyRotateFile = require('winston-daily-rotate-file')
++const path = require('path')
+ 
+-const logger = winston.createLogger({
+-   level: 'debug',
+-   format: winston.format.combine(
+-      winston.format.colorize(),
+-      winston.format.printf((info) => {
+-         let message = info.message
++// 로그 폴더 경로
++const logDir = 'log'
+ 
+-         if (typeof message === 'object') {
+-            message = JSON.stringify(message, null, 4)
+-         }
++// 로그 포맷 설정
++const logFormat = winston.format.combine(
++   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
++   winston.format.printf(({ timestamp, level, message }) => {
++      return `${timestamp} [${level.toUpperCase()}] ${message}`
++   }),
++)
+ 
+-         const args = info[Symbol.for('splat')] || []
+-         if (args.length > 0) {
+-            const argString = args.map((arg) => (typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg))).join(' ')
+-            message = `${message} ${argString}`
+-         }
++// 로그 파일 설정
++const transport = new DailyRotateFile({
++   filename: path.join(logDir, '%DATE%.log'),
++   datePattern: 'YYYY-MM-DD',
++   zippedArchive: false,
++   maxSize: '20m',
++   maxFiles: '7d',
++   dirname: logDir,
++})
+ 
+-         return `${info.level}: ${message}`
+-      }),
+-   ),
+-   transports: [new winston.transports.Console()],
++// Winston 로거 생성
++const logger = winston.createLogger({
++   level: 'info',
++   format: logFormat,
++   transports: [transport, new winston.transports.Console()],
+ })
+ 
++// 로거 내보내기
+ module.exports = logger
+diff --git a/src/controllers/authController.js b/src/controllers/authController.js
+index 9252bd6..cf7e59e 100644
+--- a/src/controllers/authController.js
++++ b/src/controllers/authController.js
+@@ -1,4 +1,5 @@
+ const { authService } = require('../services/authService')
++const { setUser, removeUser, getUser } = require('../utils/cache')
+ const { transformAuthResponse } = require('../utils/responseHelper')
+ 
+ exports.signup = async (req, res, next) => {
+@@ -28,8 +29,30 @@ exports.signup = async (req, res, next) => {
+       })
+    }
+ }
+-
+ exports.login = async (req, res, next) => {
++   try {
++      const provider = 'local'
++      const { email, password } = req.body
++      console.log('email:', email)
++      console.log('password:', password)
++
++      const loginUser = await authService.existingUser(email, password, provider)
++      console.log('loginUser:', loginUser.user.id)
++
++      await authService.recordLoginHistory(req, provider, loginUser)
++
++      req.session.userId = loginUser.user.id
++      req.session.provider = provider
++      setUser(loginUser.user.id, provider, null)
++
++      return res.status(200).json(loginUser)
++   } catch (error) {
++      console.error('로그인 중 에러 발생:', error)
++      res.status(500).json({ message: '로그인 중 오류가 발생했습니다.' })
++   }
++}
++
++exports.login2 = async (req, res, next) => {
+    try {
+       const provider = 'local'
+       const user = await authService.login(req, res, next)
+@@ -49,10 +72,28 @@ exports.login = async (req, res, next) => {
+ }
+ 
+ exports.logout = async (req, res, next) => {
++   const userId = req.session.userId
++   removeUser(userId)
++   console.log('캐시유저 삭제 조회', getUser(userId))
++
++   req.session.destroy((err) => {
++      if (err) return next(err)
++      res.clearCookie('cardverse.sid') // ✅ 클라이언트 쿠키 삭제
++      res.status(200).json({
++         success: true,
++         isAuthenticated: false,
++         message: '로그아웃에 성공했습니다.',
++         user: null,
++         authData: null,
++      })
++   })
++}
++
++exports.logout2 = async (req, res, next) => {
+    req.session.provider = 'guest'
+    // userId 세션 삭제
+    req.session.userId = null
+-   
++
+    req.logout((error) => {
+       if (error) {
+          console.error(error)
+@@ -72,28 +113,45 @@ exports.logout = async (req, res, next) => {
+ }
+ 
+ exports.status = async (req, res, next) => {
++   console.log('userId:', req.session.userId)
++   console.log('provider:')
++   if (!req.session.provider || !req.session.userId) {
++      return res.status(200).json({
++         isAuthenticated: false,
++      })
++   }
++
++   const userId = req.session.userId
++   const provider = req.session.provider
++
++   const userData = await authService.validUser(userId, provider, null)
++
++   return res.status(200).json(userData)
++}
++
++exports.status2 = async (req, res, next) => {
+    const provider = req.session.provider || 'guest'
+ 
+    // Passport 인증 또는 세션 userId가 있으면 인증된 것으로 간주
+    if (req.isAuthenticated() || req.session.userId) {
+-     // req.user가 있으면 그것을 사용, 없으면 세션 userId로 사용자 조회
+-     let userData = req.user;
+-      
+-     // 세션 데이터 일관성 유지
+-     if (!req.session.userId && req.user) {
+-        req.session.userId = req.user.id;
+-     }
+-
+-     res.json({
+-      isAuthenticated: true,
+-      user: {
+-         id: userData ? userData.id : req.session.userId,
+-         email: userData ? userData.email : null,
+-         nick: userData ? userData.nick : null,
+-         role: userData ? userData.role : null,
+-         provider,
+-      },
+-   })
++      // req.user가 있으면 그것을 사용, 없으면 세션 userId로 사용자 조회
++      let userData = req.user
++
++      // 세션 데이터 일관성 유지
++      if (!req.session.userId && req.user) {
++         req.session.userId = req.user.id
++      }
++
++      res.json({
++         isAuthenticated: true,
++         user: {
++            id: userData ? userData.id : req.session.userId,
++            email: userData ? userData.email : null,
++            nick: userData ? userData.nick : null,
++            role: userData ? userData.role : null,
++            provider,
++         },
++      })
+    } else {
+       res.json({
+          isAuthenticated: false,
+@@ -119,17 +177,17 @@ exports.updateProfile = async (req, res, next) => {
+ 
+       // userId 확인 - req.user.id를 우선 사용하고, 없으면 req.session.userId 사용
+       const userId = req.user ? req.user.id : req.session.userId
+-      
++
+       // userId가 없는 경우 에러 처리
+       if (!userId) {
+-        return res.status(401).json({
+-          success: false,
+-          message: '로그인이 필요합니다.',
+-        });
++         return res.status(401).json({
++            success: false,
++            message: '로그인이 필요합니다.',
++         })
+       }
+ 
+       const updatedUser = await authService.updateUserProfile(userId, { nick })
+-      
++
+       // 디버깅을 위한 올바른 로그 (필요한 경우)
+ 
+       return res.status(200).json({
+diff --git a/src/controllers/oauthController.js b/src/controllers/oauthController.js
+index 5a8d033..6926d5c 100644
+--- a/src/controllers/oauthController.js
++++ b/src/controllers/oauthController.js
+@@ -35,7 +35,7 @@ exports.oauthLogin = async (req, res, next) => {
+ 
+       req.session.userId = userData.user.id
+       req.session.provider = provider
+-      setUser(userData.user.id, provider, userData.authData.accessToken)
++      setUser(userData.user.id, provider, userData.user.role, userData.authData.accessToken)
+ 
+       return res.status(200).json(userData)
+    } catch (error) {
+diff --git a/src/controllers/userTemplateController.js b/src/controllers/userTemplateController.js
+index 91db9bc..7fd02a2 100644
+--- a/src/controllers/userTemplateController.js
++++ b/src/controllers/userTemplateController.js
+@@ -4,7 +4,7 @@ const TemplateSet = require('../models/templateModels/templateSet')
+ 
+ exports.createUserTemplate = async (req, res) => {
+    try {
+-      const userId = req.session.id
++      const userId = req.session.userId
+       const { templateId, formData } = req.body
+ 
+       // 기본 템플릿 존재 확인
+@@ -18,7 +18,7 @@ exports.createUserTemplate = async (req, res) => {
+ 
+       // 사용자 템플릿 생성
+       const userTemplate = await UserTemplate.create({
+-         userId,
++         user_id: userId,
+          templateId,
+          status: 'draft',
+          isPaid: false,
+diff --git a/src/loaders/express.js b/src/loaders/express.js
+index 6e9025f..0835a4c 100644
+--- a/src/loaders/express.js
++++ b/src/loaders/express.js
+@@ -14,7 +14,7 @@ function expressLoader(app) {
+       cors({
+          origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+          credentials: true,
+-      })
++      }),
+    )
+ 
+    // 기본 미들웨어
+@@ -34,12 +34,12 @@ function expressLoader(app) {
+          secret: process.env.COOKIE_SECRET,
+          cookie: {
+             httpOnly: true,
+-            secure: process.env.NODE_ENV === 'production',
++            secure: false,
+             maxAge: 1000 * 60 * 60 * 24 * 7, // 7일
+-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 프로덕션 환경에서는 쿠키를 보호하기 위해 'none'으로 설정, 개발 환경에서는 'lax'로 설정
++            sameSite: 'lax',
+          },
+          name: 'cardverse.sid', // 세션 이름
+-      })
++      }),
+    )
+ 
+    // CORS Preflight
+diff --git a/src/loaders/route.js b/src/loaders/route.js
+index d1676d5..2e4e92d 100644
+--- a/src/loaders/route.js
++++ b/src/loaders/route.js
+@@ -3,12 +3,12 @@ require('dotenv').config()
+ function routeLoader(app) {
+    // 라우터 등록
+    try {
++      app.use('/auth', require('../routes/authRoutes'))
++      app.use('/oauth', require('../routes/oauthRoutes'))
+       app.use('/templates', require('../routes/templateRoutes'))
+       app.use('/reviews', require('../routes/reviewRoutes'))
+       app.use('/post', require('../routes/postRouters'))
+       app.use('/images', require('../routes/imageRoutes'))
+-      app.use('/auth', require('../routes/authRoutes'))
+-      app.use('/oauth', require('../routes/oauthRoutes'))
+       app.use('/user', require('../routes/userRoutes'))
+       app.use('/user-templates', require('../routes/userTemplateRoutes'))
+       app.use('/purchase', require('../routes/purchaseRoutes'))
+diff --git a/src/middlewares/isAuth.js b/src/middlewares/isAuth.js
+index 1886041..d2de94a 100644
+--- a/src/middlewares/isAuth.js
++++ b/src/middlewares/isAuth.js
+@@ -1,20 +1,13 @@
+ const authController = require('../controllers/authController')
+ const oauthController = require('../controllers/oauthController')
+-
+-/**
+- * @param {provider} guest - 일반 사용자
+- * @param {provider} local - 로컬 회원
+- * @param {provider} kakao - 카카오 회원
+- */
++const { getUser } = require('../utils/cache')
+ 
+ exports.checkProvider = (req, res, next) => {
+    if (!req.session.provider) {
+-      req.session.provider = 'guest'
+    }
+    next()
+ }
+ 
+-// provider에 따라 컨트롤러 동적 연결
+ exports.providerHandler = (action) => {
+    return async (req, res, next) => {
+       try {
+@@ -32,59 +25,36 @@ exports.providerHandler = (action) => {
+    }
+ }
+ 
+-// 로그인 검증
+ exports.isLoggedIn = (req, res, next) => {
+    if (req.session.userId) {
+       return next()
+    }
+-
+-   if (req.session.provider === 'local') {
+-      if (req.isAuthenticated()) {
+-         return next()
+-      } else {
+-         return res.status(401).json({
+-            success: false,
+-            message: '로그인이 필요합니다.',
+-         })
+-      }
+-   }
+-
+-   if (req.session.provider === 'guest') {
+-      return res.status(401).json({
+-         success: false,
+-         message: '로그인이 필요합니다.',
+-      })
+-   }
+-   return next()
++   return res.status(401).json({
++      success: false,
++      message: '로그인이 필요합니다.',
++   })
+ }
+ 
+-// 비로그인 검증
+ exports.isNotLoggedIn = (req, res, next) => {
+-   if (!req.isAuthenticated()) {
+-      next()
+-   } else {
+-      res.status(403).json({
+-         success: false,
+-         message: '이미 로그인되어 있습니다.',
+-      })
++   if (!req.session.userId) {
++      return next()
+    }
++   return res.status(403).json({
++      success: false,
++      message: '이미 로그인되어 있습니다.',
++   })
+ }
+ 
+-// 관리자 검증
+ exports.isAdmin = (req, res, next) => {
+-   if (req.isAuthenticated()) {
+-      if (req.user && req.user.role === 'admin') {
+-         next()
+-      } else {
+-         res.status(403).json({
+-            success: false,
+-            message: '관리자 권한이 필요합니다.',
+-         })
+-      }
+-   } else {
+-      res.status(403).json({
++   getUser(req.session.userId)
++   const role = getUser.role
++   console.log(role)
++
++   if (role !== 'admin') {
++      return res.status(403).json({
+          success: false,
+-         message: '로그인이 필요합니다.',
++         message: '관리자 권한이 필요합니다.',
+       })
+    }
++   next()
+ }
+diff --git a/src/routes/purchaseRoutes.js b/src/routes/purchaseRoutes.js
+index 9f0f9ae..95b9f39 100644
+--- a/src/routes/purchaseRoutes.js
++++ b/src/routes/purchaseRoutes.js
+@@ -1,6 +1,6 @@
+ const express = require('express')
+ const router = express.Router()
+-const { isLoggedIn } = require('../api/middlewares/isAuth')
++const { isLoggedIn } = require('../middlewares/isAuth')
+ const { processPurchase, getPurchaseHistory, checkTemplatePurchased } = require('../controllers/purchaseController')
+ 
+ // 결제 처리 라우트
+diff --git a/src/routes/userTemplateRoutes.js b/src/routes/userTemplateRoutes.js
+index 8b69fd0..7f19443 100644
+--- a/src/routes/userTemplateRoutes.js
++++ b/src/routes/userTemplateRoutes.js
+@@ -1,7 +1,7 @@
+ const express = require('express')
+ const router = express.Router()
+ const { createUserTemplate, getUserTemplate, updateTemplateSet } = require('../controllers/userTemplateController')
+-const { isLoggedIn } = require('../api/middlewares/isAuth')
++const { isLoggedIn } = require('../middlewares/isAuth')
+ 
+ // 사용자 템플릿 생성
+ router.post('/', isLoggedIn, createUserTemplate)
+diff --git a/src/services/authService.js b/src/services/authService.js
+index 7384926..3ca271a 100644
+--- a/src/services/authService.js
++++ b/src/services/authService.js
+@@ -1,4 +1,3 @@
+-const jwt = require('jsonwebtoken')
+ const logger = require('../config/logger')
+ const User = require('../models/userModels/user')
+ const OauthAccount = require('../models/userModels/oauthAccount')
+@@ -9,6 +8,7 @@ const passport = require('passport')
+ const { formatDate, fetchKST } = require('../utils/timezoneUtil')
+ const { Op } = require('sequelize')
+ const bcrypt = require('bcrypt')
++const { transformAuthResponse } = require('../utils/responseHelper')
+ 
+ class AuthService {
+    constructor() {}
+@@ -39,6 +39,35 @@ class AuthService {
+       })
+    }
+ 
++   async existingUser(email, password, provider) {
++      try {
++         const existingUser = await User.findOne({ where: { email } })
++
++         if (!existingUser) {
++            return { success: false, message: 'User not found' }
++         }
++
++         const isMatch = await bcrypt.compare(password, existingUser.password)
++
++         if (!isMatch) {
++            return { success: false, message: '비밀번호가 일치하지 않습니다.' }
++         }
++
++         const responseUser = transformAuthResponse({
++            success: true,
++            user: existingUser,
++            token: null,
++            provider,
++            message: '로그인에 성공하였습니다.',
++         })
++         console.log('로그인 리스폰스유저:', responseUser)
++         return responseUser
++      } catch (error) {
++         console.error('로그인 조회중 오류가 발생하였습니다.', error)
++         throw new Error(error.message || '로그인 조회 중 오류가 발생하였습니다.')
++      }
++   }
++
+    async exUser(email, nick) {
+       try {
+          const existingUser = await User.findOne({
+@@ -58,11 +87,24 @@ class AuthService {
+          throw new Error(error.message || '회원 조회 중 오류가 발생하였습니다.')
+       }
+    }
++
+    async validUser(id, provider, refreshToken) {
+       try {
+-         logger.info('⏩ validUser 체크 실행:', `id:${id}, provider:${provider}, refreshToken:${refreshToken}`)
++         if (provider === 'local') {
++            const user = await User.findOne({ where: { id }, raw: true })
++
++            const responseUser = transformAuthResponse({
++               success: true,
++               user,
++               token: null,
++               provider,
++               message: '유저 정보 조회에 성공했습니다.',
++            })
++
++            console.log('조회 리스폰스유저:', responseUser)
++            return responseUser
++         }
+ 
+-         // ID를 기준으로 User 테이블 조회
+          const user = await User.findByPk(id, {
+             include: [
+                {
+@@ -133,6 +175,7 @@ class AuthService {
+          throw new Error(error.message || '회원 조회 중 오류가 발생하였습니다.')
+       }
+    }
++
+    async recordLoginHistory(req, provider, userData) {
+       const transaction = await sequelize.transaction()
+       const userId = userData?.id || userData?.user?.id
+diff --git a/src/utils/cache.js b/src/utils/cache.js
+index 9eb971a..11f1cba 100644
+--- a/src/utils/cache.js
++++ b/src/utils/cache.js
+@@ -2,9 +2,15 @@ const cache = new Map()
+ const CACHE_TTL = 1000 * 60 * 60
+ 
+ // 로그인 정보 저장
+-function setUser(userId, provider, accessToken) {
++function setUser(userId, provider, role, accessToken) {
++   console.group('셋유저시작')
++   console.log(userId)
++   console.log(provider)
++   console.log(role)
++   console.log(accessToken)
++   console.groupEnd('셋유저끝')
+    const timestamp = Date.now()
+-   cache.set(userId, { provider, accessToken, timestamp })
++   cache.set(userId, { provider, accessToken, role, timestamp })
+ 
+    // 일정 시간이 지나면 자동 삭제
+    setTimeout(() => {

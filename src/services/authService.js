@@ -1,4 +1,3 @@
-const jwt = require('jsonwebtoken')
 const logger = require('../config/logger')
 const User = require('../models/userModels/user')
 const OauthAccount = require('../models/userModels/oauthAccount')
@@ -9,6 +8,7 @@ const passport = require('passport')
 const { formatDate, fetchKST } = require('../utils/timezoneUtil')
 const { Op } = require('sequelize')
 const bcrypt = require('bcrypt')
+const { transformAuthResponse } = require('../utils/responseHelper')
 
 class AuthService {
    constructor() {}
@@ -39,6 +39,35 @@ class AuthService {
       })
    }
 
+   async existingUser(email, password, provider) {
+      try {
+         const existingUser = await User.findOne({ where: { email } })
+
+         if (!existingUser) {
+            return { success: false, message: 'User not found' }
+         }
+
+         const isMatch = await bcrypt.compare(password, existingUser.password)
+
+         if (!isMatch) {
+            return { success: false, message: '비밀번호가 일치하지 않습니다.' }
+         }
+
+         const responseUser = transformAuthResponse({
+            success: true,
+            user: existingUser,
+            token: null,
+            provider,
+            message: '로그인에 성공하였습니다.',
+         })
+         console.log('로그인 리스폰스유저:', responseUser)
+         return responseUser
+      } catch (error) {
+         console.error('로그인 조회중 오류가 발생하였습니다.', error)
+         throw new Error(error.message || '로그인 조회 중 오류가 발생하였습니다.')
+      }
+   }
+
    async exUser(email, nick) {
       try {
          const existingUser = await User.findOne({
@@ -58,11 +87,24 @@ class AuthService {
          throw new Error(error.message || '회원 조회 중 오류가 발생하였습니다.')
       }
    }
+
    async validUser(id, provider, refreshToken) {
       try {
-         logger.info('⏩ validUser 체크 실행:', `id:${id}, provider:${provider}, refreshToken:${refreshToken}`)
+         if (provider === 'local') {
+            const user = await User.findOne({ where: { id }, raw: true })
 
-         // ID를 기준으로 User 테이블 조회
+            const responseUser = transformAuthResponse({
+               success: true,
+               user,
+               token: null,
+               provider,
+               message: '유저 정보 조회에 성공했습니다.',
+            })
+
+            console.log('조회 리스폰스유저:', responseUser)
+            return responseUser
+         }
+
          const user = await User.findByPk(id, {
             include: [
                {
@@ -133,6 +175,7 @@ class AuthService {
          throw new Error(error.message || '회원 조회 중 오류가 발생하였습니다.')
       }
    }
+
    async recordLoginHistory(req, provider, userData) {
       const transaction = await sequelize.transaction()
       const userId = userData?.id || userData?.user?.id
