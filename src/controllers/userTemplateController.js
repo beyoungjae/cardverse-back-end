@@ -4,7 +4,7 @@ const TemplateSet = require('../models/templateModels/templateSet')
 
 exports.createUserTemplate = async (req, res) => {
    try {
-      const userId = req.session.id
+      const userId = req.session.userId
       const { templateId, formData } = req.body
 
       // 기본 템플릿 존재 확인
@@ -18,7 +18,7 @@ exports.createUserTemplate = async (req, res) => {
 
       // 사용자 템플릿 생성
       const userTemplate = await UserTemplate.create({
-         userId,
+         user_id: userId,
          templateId,
          status: 'draft',
          isPaid: false,

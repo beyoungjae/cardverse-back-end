@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const { createUserTemplate, getUserTemplate, updateTemplateSet } = require('../controllers/userTemplateController')
-const { isLoggedIn } = require('../api/middlewares/isAuth')
+const { isLoggedIn } = require('../middlewares/isAuth')
 
 // 사용자 템플릿 생성
 router.post('/', isLoggedIn, createUserTemplate)

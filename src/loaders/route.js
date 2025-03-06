@@ -3,12 +3,12 @@ require('dotenv').config()
 function routeLoader(app) {
    // 라우터 등록
    try {
+      app.use('/auth', require('../routes/authRoutes'))
+      app.use('/oauth', require('../routes/oauthRoutes'))
       app.use('/templates', require('../routes/templateRoutes'))
       app.use('/reviews', require('../routes/reviewRoutes'))
       app.use('/post', require('../routes/postRouters'))
       app.use('/images', require('../routes/imageRoutes'))
-      app.use('/auth', require('../routes/authRoutes'))
-      app.use('/oauth', require('../routes/oauthRoutes'))
       app.use('/user', require('../routes/userRoutes'))
       app.use('/user-templates', require('../routes/userTemplateRoutes'))
       app.use('/purchase', require('../routes/purchaseRoutes'))

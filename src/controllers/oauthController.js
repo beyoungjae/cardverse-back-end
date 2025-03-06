@@ -35,7 +35,7 @@ exports.oauthLogin = async (req, res, next) => {
 
       req.session.userId = userData.user.id
       req.session.provider = provider
-      setUser(userData.user.id, provider, userData.authData.accessToken)
+      setUser(userData.user.id, provider, userData.user.role, userData.authData.accessToken)
 
       return res.status(200).json(userData)
    } catch (error) {
